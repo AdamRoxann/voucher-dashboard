@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('title','Stores')
+@section('content')
+<div class="page-heading"><div><span class="eyebrow blue">CONFIGURATION</span><h2>Store directory</h2><p class="muted">Manage the stores that can submit voucher claims.</p></div><a href="{{ route('stores.create') }}" class="button button-primary">＋ Add store</a></div>
+<section class="panel table-panel"><div class="panel-heading"><div><h3>All stores</h3><p class="muted">{{ $stores->total() }} registered stores</p></div></div><div class="table-scroll"><table><thead><tr><th>Store name</th><th>Claims</th><th>Status</th><th>Actions</th></tr></thead><tbody>@forelse($stores as $store)<tr><td><strong>{{ $store->name }}</strong></td><td>{{ $store->claims_count }}</td><td><span class="status-badge {{ $store->is_active?'status-done':'status-pending' }}">{{ $store->is_active?'Active':'Inactive' }}</span></td><td><div class="row-actions"><a href="{{ route('stores.edit',$store) }}">Edit</a><form method="POST" action="{{ route('stores.destroy',$store) }}" data-confirm="Delete this store? This is only possible if it has no claims.">@csrf @method('DELETE')<button>Delete</button></form></div></td></tr>@empty<tr><td colspan="4"><div class="empty-state">No stores added yet.</div></td></tr>@endforelse</tbody></table></div><div class="pagination-wrap">{{ $stores->links() }}</div></section>
+@endsection
