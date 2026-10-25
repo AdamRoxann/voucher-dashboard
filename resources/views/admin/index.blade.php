@@ -17,5 +17,210 @@
 <section class="panel admin-panel" id="stores"><div class="panel-heading"><div><h3>Merchant directory</h3><p class="muted">{{ $stores->count() }} stores · Deactivate stores instead of deleting those with claim history.</p></div></div>
 <form method="POST" action="{{ route('admin.stores.store') }}" class="admin-add-store">@csrf<input name="name" placeholder="Enter a new store name" maxlength="150" required><button class="button button-primary">＋ Add store</button></form>
 <div class="admin-store-list">@foreach($stores as $store)<div class="admin-store-row"><div><strong>{{ $store->name }}</strong><small>{{ $store->claims_count }} claims · {{ $store->is_active ? 'Active' : 'Inactive' }}</small></div><form method="POST" action="{{ route('admin.stores.toggle', $store) }}">@csrf @method('PATCH')<button class="button {{ $store->is_active ? 'button-outline' : 'button-primary' }}">{{ $store->is_active ? 'Deactivate' : 'Activate' }}</button></form></div>@endforeach</div></section>
-<section class="panel admin-panel" id="transfers"><div class="panel-heading"><div><h3>Claim transfer management</h3><p class="muted">Update transfer status and transfer date. One row represents one submitted claim.</p></div></div><div class="table-scroll"><table><thead><tr><th>Merchant / claim</th><th>Claim date</th><th>Vouchers</th><th>Claim total</th><th>Transfer status</th><th>Transfer date</th><th>Action</th></tr></thead><tbody>@forelse($claims as $claim)<tr><td><strong>{{ $claim->store->name }}</strong><small class="table-subline">{{ $claim->pic_name }} · #{{ $claim->id }}</small></td><td>{{ $claim->claim_date?->format('d M Y') }}</td><td>{{ $claim->vouchers->count() }}</td><td>Rp {{ number_format((float)$claim->total_claimed, 0, ',', '.') }}</td><td><span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">{{ $claim->transfer_status === 'transferred' ? 'Transferred' : 'Pending' }}</span></td><td colspan="2"><form class="admin-transfer-form" method="POST" action="{{ route('admin.claims.transfer', $claim) }}">@csrf @method('PATCH')<select name="transfer_status"><option value="pending" @selected($claim->transfer_status === 'pending')>Pending</option><option value="transferred" @selected($claim->transfer_status === 'transferred')>Transferred</option></select><input type="date" name="transfer_date" value="{{ $claim->transfer_date?->format('Y-m-d') }}"><button class="button button-primary button-small">Save</button><a class="text-link" href="{{ route('claims.show', $claim) }}">Details</a></form></td></tr>@empty<tr><td colspan="7">No claims found.</td></tr>@endforelse</tbody></table></div><div class="pagination-wrap">{{ $claims->fragment('transfers')->links() }}</div></section>
+<!-- <section class="panel admin-panel" id="transfers"><div class="panel-heading"><div><h3>Claim transfer management</h3><p class="muted">Update transfer status and transfer date. One row represents one submitted claim.</p></div></div><div class="table-scroll"><table><thead><tr><th>Merchant / claim</th><th>Claim date</th><th>Vouchers</th><th>Claim total</th><th>Transfer status</th><th>Transfer date</th><th>Action</th></tr></thead><tbody>@forelse($claims as $claim)<tr><td><strong>{{ $claim->store->name }}</strong><small class="table-subline">{{ $claim->pic_name }} · #{{ $claim->id }}</small></td><td>{{ $claim->claim_date?->format('d M Y') }}</td><td>{{ $claim->vouchers->count() }}</td><td>Rp {{ number_format((float)$claim->total_claimed, 0, ',', '.') }}</td><td><span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">{{ $claim->transfer_status === 'transferred' ? 'Transferred' : 'Pending' }}</span></td><td colspan="2"><form class="admin-transfer-form" method="POST" action="{{ route('admin.claims.transfer', $claim) }}">@csrf @method('PATCH')<select name="transfer_status"><option value="pending" @selected($claim->transfer_status === 'pending')>Pending</option><option value="transferred" @selected($claim->transfer_status === 'transferred')>Transferred</option></select><input type="date" name="transfer_date" value="{{ $claim->transfer_date?->format('Y-m-d') }}"><button class="button button-primary button-small">Save</button><a class="text-link" href="{{ route('claims.show', $claim) }}">Details</a></form></td></tr>@empty<tr><td colspan="7">No claims found.</td></tr>@endforelse</tbody></table></div><div class="pagination-wrap">{{ $claims->fragment('transfers')->links() }}</div></section> -->
+
+<section class="panel table-panel admin-panel" id="transfers">
+    <div class="panel-heading">
+        <div>
+            <h3>Claim records</h3>
+            <p class="muted">
+                {{ number_format($claims->total()) }} matching records · newest first
+            </p>
+        </div>
+
+        <div>
+            <a href="{{ route('claims.export', request()->query()) }}"
+            class="button button-outline">
+                ↓ Download Excel
+            </a>
+
+            <a
+                href="{{ route('claims.proofs.download', request()->query()) }}"
+                class="button button-primary"
+                >
+                ↓ Download All Proofs
+            </a>
+        </div>
+    </div>
+
+    <form class="filter-card" method="GET"
+          action="{{ route('admin.index') }}#transfers">
+        <div class="filter-title">
+            <div>
+                <h3>Find a claim</h3>
+                <p class="muted">
+                    Narrow down claims by date, store, voucher type or keyword.
+                </p>
+            </div>
+
+            <a href="{{ route('admin.index') }}#transfers"
+               class="text-link">
+                Reset filters ↺
+            </a>
+        </div>
+
+        <div class="filter-grid">
+            <label>
+                From date
+                <input type="date" name="from"
+                       value="{{ request('from') }}">
+            </label>
+
+            <label>
+                To date
+                <input type="date" name="to"
+                       value="{{ request('to') }}">
+            </label>
+
+            <label>
+                Store
+                <select name="store_id">
+                    <option value="">All stores</option>
+                    @foreach($stores as $store)
+                        <option value="{{ $store->id }}"
+                            @selected((string) request('store_id') === (string) $store->id)>
+                            {{ $store->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
+                Voucher type
+                <select name="voucher_type">
+                    <option value="">All types</option>
+                    @foreach(['A', 'B', 'C'] as $type)
+                        <option value="{{ $type }}"
+                            @selected(request('voucher_type') === $type)>
+                            Voucher {{ $type }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label class="search-field">
+                Search store, PIC or code
+                <input name="search"
+                       value="{{ request('search') }}"
+                       placeholder="e.g. BEIGE STUDIO or A006">
+            </label>
+
+            <button class="button button-dark" type="submit">
+                Apply filters
+            </button>
+        </div>
+    </form>
+
+    <div class="table-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th>Claim date</th>
+                    <th>Store / PIC</th>
+                    <th>Claim amount</th>
+                    <th>Vouchers</th>
+                    <th>Transfer</th>
+                    <th>Transfer date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @forelse($claims as $claim)
+                    <tr>
+                        <td>
+                            <strong>{{ $claim->claim_date?->format('d M Y') }}</strong>
+                            <small>#{{ $claim->id }}</small>
+                        </td>
+
+                        <td>
+                            <strong>{{ $claim->store->name }}</strong>
+                            <small>
+                                {{ $claim->pic_name }} · {{ $claim->pic_phone }}
+                            </small>
+                        </td>
+
+                        <td class="amount">
+                            Rp {{ number_format((float) $claim->total_claimed, 0, ',', '.') }}
+                        </td>
+
+                        <td>
+                            <div class="voucher-pills">
+                                @foreach(['A', 'B', 'C'] as $type)
+                                    @php
+                                        $count = $claim->vouchers
+                                            ->where('voucher_type', $type)
+                                            ->count();
+                                    @endphp
+
+                                    @if($count)
+                                        <span class="pill pill-{{ strtolower($type) }}">
+                                            {{ $type }} · {{ $count }}
+                                        </span>
+                                    @endif
+                                @endforeach
+                            </div>
+                            <small>{{ $claim->vouchers->count() }} codes</small>
+                        </td>
+
+                        <td>
+                            <span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">
+                                {{ $claim->transfer_status === 'transferred' ? '✓ Transferred' : '○ Pending' }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ $claim->transfer_date?->format('d M Y') ?? '—' }}
+                        </td>
+
+                        <td style="display: flex; align-items: center;">
+                            <form class="admin-transfer-form"
+                                  method="POST"
+                                  action="{{ route('admin.claims.transfer', $claim) }}">
+                                @csrf
+                                @method('PATCH')
+
+                                <select name="transfer_status" aria-label="Transfer status">
+                                    <option value="pending"
+                                        @selected($claim->transfer_status === 'pending')>
+                                        Pending
+                                    </option>
+                                    <option value="transferred"
+                                        @selected($claim->transfer_status === 'transferred')>
+                                        Transferred
+                                    </option>
+                                </select>
+
+                                <input type="date" name="transfer_date"
+                                       aria-label="Transfer date"
+                                       value="{{ $claim->transfer_date?->format('Y-m-d') }}">
+
+                                <button class="button button-primary button-small">
+                                    Save
+                                </button>
+                            </form>
+
+                             <a class="text-link"
+                               href="{{ route('claims.show', $claim) }}">
+                                Details
+                            </a>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                No claims found. Try changing your filters.
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-wrap">
+        {{ $claims->fragment('transfers')->links() }}
+    </div>
+</section>
 @endsection
