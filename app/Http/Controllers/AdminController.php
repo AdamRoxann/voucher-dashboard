@@ -10,19 +10,82 @@ use Illuminate\Validation\Rule;
 
 class AdminController extends Controller
 {
-    public function index()
+    // public function index()
+    // {
+    //     $settings = DB::table('campaign_settings')->pluck('setting_value', 'setting_key');
+    //     $stores = Store::withCount('claims')->orderBy('name')->get();
+    //     $claims = Claim::with(['store', 'vouchers'])->latest('claim_date')->latest('id')->paginate(30);
+    //     $counts = [
+    //         'claims' => Claim::count(),
+    //         'pending' => Claim::where('transfer_status', 'pending')->count(),
+    //         'transferred' => Claim::where('transfer_status', 'transferred')->count(),
+    //         'stores' => Store::where('is_active', true)->count(),
+    //     ];
+    //     return view('admin.index', compact('settings', 'stores', 'claims', 'counts'));
+    // }
+    
+    public function index(Request $request)
     {
-        $settings = DB::table('campaign_settings')->pluck('setting_value', 'setting_key');
-        $stores = Store::withCount('claims')->orderBy('name')->get();
-        $claims = Claim::with(['store', 'vouchers'])->latest('claim_date')->latest('id')->paginate(30);
+        $settings = DB::table('campaign_settings')
+            ->pluck('setting_value', 'setting_key');
+
+        $stores = Store::withCount('claims')
+            ->orderBy('name')
+            ->get();
+
+        // Match the public Overview filters.
+        $query = Claim::query()
+            ->with(['store', 'vouchers'])
+            ->when($request->filled('from'), fn ($q) =>
+                $q->whereDate('claim_date', '>=', $request->date('from'))
+            )
+            ->when($request->filled('to'), fn ($q) =>
+                $q->whereDate('claim_date', '<=', $request->date('to'))
+            )
+            ->when($request->filled('store_id'), fn ($q) =>
+                $q->where('store_id', $request->integer('store_id'))
+            )
+            ->when($request->filled('voucher_type'), fn ($q) =>
+                $q->whereHas('vouchers', fn ($v) =>
+                    $v->where('voucher_type', $request->voucher_type)
+                )
+            )
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->search;
+
+                $q->where(function ($w) use ($search) {
+                    $w->whereHas('store', fn ($s) =>
+                        $s->where('name', 'like', '%' . $search . '%')
+                    )
+                    ->orWhere('pic_name', 'like', '%' . $search . '%')
+                    ->orWhereHas('vouchers', fn ($v) =>
+                        $v->where('voucher_code', 'like', '%' . $search . '%')
+                    );
+                });
+            });
+
+        $claims = (clone $query)
+            ->latest('claim_date')
+            ->latest('id')
+            ->paginate(30)
+            ->withQueryString();
+
+        // Keep the admin summary cards as overall totals.
         $counts = [
             'claims' => Claim::count(),
             'pending' => Claim::where('transfer_status', 'pending')->count(),
             'transferred' => Claim::where('transfer_status', 'transferred')->count(),
             'stores' => Store::where('is_active', true)->count(),
         ];
-        return view('admin.index', compact('settings', 'stores', 'claims', 'counts'));
+
+        return view('admin.index', compact(
+            'settings',
+            'stores',
+            'claims',
+            'counts'
+        ));
     }
+
 
     public function updateSettings(Request $request)
     {

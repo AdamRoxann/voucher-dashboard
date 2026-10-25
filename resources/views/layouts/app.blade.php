@@ -12,7 +12,7 @@
         <img class="campaign-banner" src="{{ asset('images/banner-mandiri.png') }}" alt="Campaign banner placeholder">
         <div class="hero-topline"><span class="eyebrow">CAMPAIGN OPERATIONS</span><span class="report-chip">VOUCHER REPORT <span>↗</span></span></div>
         <h1>Voucher claims, <span>made simple.</span></h1>
-        <p>Livin’ by Mandiri &amp; Visa 4-8 September 2026</p>
+        <p>Visa Present Livin’ Markt 4-8 November 2026</p>
         <div class="hero-tags"><span>DISCOVER</span><i>·</i><span>CONNECT</span><i>·</i><span>COLLECT</span></div>
     </div>
 </header>

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use ZipArchive;
 
 class ClaimController extends Controller
 {
@@ -71,5 +72,109 @@ class ClaimController extends Controller
             $out[$type] = array_values(array_unique(array_filter(array_map(fn($v)=>trim($v), $raw))));
         }
         return $out;
+    }
+
+    public function downloadProofs(Request $request)
+    {
+        abort_unless(
+            auth()->check() && (bool) auth()->user()->is_admin,
+            403
+        );
+
+        // Apply the same filters as the dashboard.
+        $query = Claim::query()
+            ->with(['store', 'vouchers'])
+            ->when($request->filled('from'), function ($q) use ($request) {
+                $q->whereDate('claim_date', '>=', $request->input('from'));
+            })
+            ->when($request->filled('to'), function ($q) use ($request) {
+                $q->whereDate('claim_date', '<=', $request->input('to'));
+            })
+            ->when($request->filled('store_id'), function ($q) use ($request) {
+                $q->where('store_id', $request->integer('store_id'));
+            })
+            ->when($request->filled('voucher_type'), function ($q) use ($request) {
+                $q->whereHas('vouchers', function ($v) use ($request) {
+                    $v->where('voucher_type', $request->input('voucher_type'));
+                });
+            })
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->input('search');
+
+                $q->where(function ($w) use ($search) {
+                    $w->whereHas('store', function ($s) use ($search) {
+                        $s->where('name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhere('pic_name', 'like', '%' . $search . '%')
+                    ->orWhereHas('vouchers', function ($v) use ($search) {
+                        $v->where('voucher_code', 'like', '%' . $search . '%');
+                    });
+                });
+            });
+
+        $claims = $query->orderBy('claim_date')
+            ->orderBy('id')
+            ->get();
+
+        $disk = Storage::disk('public');
+
+        // Keep only claims that have an existing proof image.
+        $proofs = $claims->filter(function ($claim) use ($disk) {
+            return !empty($claim->proof_image_path)
+                && $disk->exists($claim->proof_image_path);
+        });
+
+        if ($proofs->isEmpty()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No proof images were found for the selected filters.');
+        }
+
+        if (!class_exists(ZipArchive::class)) {
+            abort(500, 'The PHP ZIP extension is not enabled on this server.');
+        }
+
+        $zipPath = tempnam(sys_get_temp_dir(), 'claim-proofs-');
+
+        if ($zipPath === false) {
+            abort(500, 'Could not create the proof download archive.');
+        }
+
+        $zip = new ZipArchive();
+
+        if ($zip->open($zipPath, ZipArchive::OVERWRITE) !== true) {
+            @unlink($zipPath);
+            abort(500, 'Could not create the proof ZIP file.');
+        }
+
+        foreach ($proofs as $claim) {
+            $relativePath = $claim->proof_image_path;
+            $absolutePath = $disk->path($relativePath);
+
+            // Avoid duplicate filenames and keep the claim ID identifiable.
+            $originalName = basename($relativePath);
+            $safeName = preg_replace('/[^A-Za-z0-9._-]/', '_', $originalName);
+
+            $storeName = preg_replace(
+                '/[^A-Za-z0-9._-]/',
+                '_',
+                $claim->store->name ?? 'store'
+            );
+
+            $zipName = sprintf(
+                'claim-%d-%s-%s',
+                $claim->id,
+                $storeName,
+                $safeName
+            );
+
+            $zip->addFile($absolutePath, $zipName);
+        }
+
+        $zip->close();
+
+        return response()
+            ->download($zipPath, 'claim-proofs-' . now()->format('Ymd-His') . '.zip')
+            ->deleteFileAfterSend(true);
     }
 }
