@@ -76,7 +76,7 @@
             Voucher type
             <select name="voucher_type">
                 <option value="">All types</option>
-                @foreach(['A', 'B', 'C'] as $type)
+                @foreach(['A', 'B'] as $type)
                     <option
                         value="{{ $type }}"
                         @selected(request('voucher_type') === $type)
@@ -127,7 +127,7 @@
             VOUCHER TYPES <span>◈</span>
         </div>
         <strong>
-            {{ number_format($stats['voucher_types']) }}<em>/ 3</em>
+            {{ number_format($stats['voucher_types']) }}<em>/ 2</em>
         </strong>
         <small>Types represented in results</small>
         <div class="stat-line green"></div>
@@ -196,7 +196,7 @@
         @endphp
 
         <div class="type-list">
-            @foreach(['A', 'B', 'C'] as $type)
+            @foreach(['A', 'B'] as $type)
                 @php
                     $count = (int) ($typeCounts[$type] ?? 0);
                     $percentage = ($count / $typeTotal) * 100;
@@ -342,7 +342,7 @@
 
                         <td>
                             <div class="voucher-pills">
-                                @foreach(['A', 'B', 'C'] as $type)
+                                @foreach(['A', 'B'] as $type)
                                     @php
                                         $voucherCount = $claim->vouchers
                                             ->where('voucher_type', $type)
