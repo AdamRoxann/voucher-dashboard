@@ -14,9 +14,26 @@
 <div class="field"><label for="event_subtitle">Subtitle</label><input id="event_subtitle" name="event_subtitle" value="{{ old('event_subtitle', $settings['event_subtitle'] ?? 'Discover · Connect · Collect') }}"></div>
 <div class="form-grid"><div class="field"><label for="event_start">Start date</label><input id="event_start" type="date" name="event_start" value="{{ old('event_start', $settings['event_start'] ?? '2026-09-25') }}" required></div><div class="field"><label for="event_end">End date</label><input id="event_end" type="date" name="event_end" value="{{ old('event_end', $settings['event_end'] ?? '2026-09-27') }}" required></div></div>
 <div class="form-actions"><button class="button button-primary">Save campaign settings</button></div></form></section>
-<section class="panel admin-panel" id="stores"><div class="panel-heading"><div><h3>Merchant directory</h3><p class="muted">{{ $stores->count() }} stores · Deactivate stores instead of deleting those with claim history.</p></div></div>
-<form method="POST" action="{{ route('admin.stores.store') }}" class="admin-add-store">@csrf<input name="name" placeholder="Enter a new store name" maxlength="150" required><button class="button button-primary">＋ Add store</button></form>
-<div class="admin-store-list">@foreach($stores as $store)<div class="admin-store-row"><div><strong>{{ $store->name }}</strong><small>{{ $store->claims_count }} claims · {{ $store->is_active ? 'Active' : 'Inactive' }}</small></div><form method="POST" action="{{ route('admin.stores.toggle', $store) }}">@csrf @method('PATCH')<button class="button {{ $store->is_active ? 'button-outline' : 'button-primary' }}">{{ $store->is_active ? 'Deactivate' : 'Activate' }}</button></form></div>@endforeach</div></section>
+<section class="panel admin-panel" id="stores">
+    <div class="panel-heading">
+        <div><h3>Merchant directory</h3><p class="muted">{{ $stores->count() }} stores · Deactivate stores instead of deleting those with claim history.</p></div>
+        <a href="{{ route('areas.index') }}" class="button button-outline">Manage areas</a>
+    </div>
+    <form method="POST" action="{{ route('admin.stores.store') }}" class="admin-add-store">
+        @csrf
+        <input name="name" placeholder="Enter a new store name" maxlength="150" required>
+        <select name="area_id" required aria-label="Store area">
+            <option value="">Choose area</option>
+            @foreach($areas as $area)<option value="{{ $area->id }}" @selected((string) old('area_id') === (string) $area->id)>{{ $area->name }}</option>@endforeach
+        </select>
+        <button class="button button-primary">＋ Add store</button>
+    </form>
+    <div class="admin-store-list">
+        @foreach($stores as $store)
+            <div class="admin-store-row"><div><strong>{{ $store->name }}</strong><small>{{ $store->area?->name ?? 'Unassigned area' }} · {{ $store->claims_count }} claims · {{ $store->is_active ? 'Active' : 'Inactive' }}</small></div><div class="admin-store-actions"><a class="text-link" href="{{ route('stores.edit', $store) }}">Edit</a><form method="POST" action="{{ route('admin.stores.toggle', $store) }}">@csrf @method('PATCH')<button class="button {{ $store->is_active ? 'button-outline' : 'button-primary' }}">{{ $store->is_active ? 'Deactivate' : 'Activate' }}</button></form></div></div>
+        @endforeach
+    </div>
+</section>
 <!-- <section class="panel admin-panel" id="transfers"><div class="panel-heading"><div><h3>Claim transfer management</h3><p class="muted">Update transfer status and transfer date. One row represents one submitted claim.</p></div></div><div class="table-scroll"><table><thead><tr><th>Merchant / claim</th><th>Claim date</th><th>Vouchers</th><th>Claim total</th><th>Transfer status</th><th>Transfer date</th><th>Action</th></tr></thead><tbody>@forelse($claims as $claim)<tr><td><strong>{{ $claim->store->name }}</strong><small class="table-subline">{{ $claim->pic_name }} · #{{ $claim->id }}</small></td><td>{{ $claim->claim_date?->format('d M Y') }}</td><td>{{ $claim->vouchers->count() }}</td><td>Rp {{ number_format((float)$claim->total_claimed, 0, ',', '.') }}</td><td><span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">{{ $claim->transfer_status === 'transferred' ? 'Transferred' : 'Pending' }}</span></td><td colspan="2"><form class="admin-transfer-form" method="POST" action="{{ route('admin.claims.transfer', $claim) }}">@csrf @method('PATCH')<select name="transfer_status"><option value="pending" @selected($claim->transfer_status === 'pending')>Pending</option><option value="transferred" @selected($claim->transfer_status === 'transferred')>Transferred</option></select><input type="date" name="transfer_date" value="{{ $claim->transfer_date?->format('Y-m-d') }}"><button class="button button-primary button-small">Save</button><a class="text-link" href="{{ route('claims.show', $claim) }}">Details</a></form></td></tr>@empty<tr><td colspan="7">No claims found.</td></tr>@endforelse</tbody></table></div><div class="pagination-wrap">{{ $claims->fragment('transfers')->links() }}</div></section> -->
 
 <section class="panel table-panel admin-panel" id="transfers">
@@ -49,7 +66,7 @@
             <div>
                 <h3>Find a claim</h3>
                 <p class="muted">
-                    Narrow down claims by date, store, voucher type or keyword.
+                    Narrow down claims by date, area, store, voucher type or keyword.
                 </p>
             </div>
 
@@ -73,13 +90,22 @@
             </label>
 
             <label>
+                Area
+                <select name="area_id" data-area-select>
+                    <option value="">All areas</option>
+                    @foreach($areas as $area)
+                        <option value="{{ $area->id }}" @selected((string) request('area_id') === (string) $area->id)>{{ $area->name }}</option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
                 Store
-                <select name="store_id">
+                <select name="store_id" data-store-select>
                     <option value="">All stores</option>
                     @foreach($stores as $store)
-                        <option value="{{ $store->id }}"
-                            @selected((string) request('store_id') === (string) $store->id)>
-                            {{ $store->name }}
+                        <option value="{{ $store->id }}" data-area-id="{{ $store->area_id }}" @selected((string) request('store_id') === (string) $store->id)>
+                            {{ $store->name }}{{ $store->area ? ' — '.$store->area->name : ' — Unassigned' }}
                         </option>
                     @endforeach
                 </select>
@@ -135,9 +161,8 @@
 
                         <td>
                             <strong>{{ $claim->store->name }}</strong>
-                            <small>
-                                {{ $claim->pic_name }} · {{ $claim->pic_phone }}
-                            </small>
+                            <small>Area: {{ $claim->store->area?->name ?? 'Unassigned' }}</small>
+                            <small>{{ $claim->pic_name }} · {{ $claim->pic_phone }}</small>
                         </td>
 
                         <td class="amount">

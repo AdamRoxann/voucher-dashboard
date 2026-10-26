@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Area;
 use App\Models\Store;
 use Illuminate\Database\Seeder;
 
@@ -9,32 +10,96 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // $stores = [
-        //     '33PERCENTACTIVE','ARENA','AURA ACTIVEWEAR','AVGAL','AYRE STUDIO','BEIGE STUDIO',
-        //     'BERLY JEWELRY','BWBYAZ','BWYBAZ','BY ANIND','BYBLANK','BYEOL','CALLALUNA_STUDIO',
-        //     'CTC.LEATHER','DAVELLINE','DONAT BAHAGIA','ESSI','FITYOU','FLOWNLESS','FTR',
-        //     'GOKYO DONBURI','HAICLO','HAIDEE & ORLIN','HERPALAIS','HEXXA','HOUSE OF KAIARA',
-        //     'Hyln studio','HYUN STUDIO','IE.DE','INESCA','INESSA','IT’S PRETTY BASIC','JENNROSE',
-        //     'JENNROSE Clothing','JNE','JOLIE JEWELRY TALE','KAN EYEWEAR','KEAN EYEWEAR','Kold Treats',
-        //     'LADOUCE','LARENA','LORUVA','LOUNA','Luknits','LUKNITS.ID','MAIA','MANDIRI','MARDEEN',
-        //     'Margaux','MARGAUXJAKARTA','MATCHANESAN SERMUPUN','MEMORIES OF SUMMER','MICA','MOM JEANS',
-        //     'MORSE','MYCOLORID','MYKAMI OFFICIAL','NIBBI','NIPPIES','NOIR SUR BLANC','ON LEAVE',
-        //     'ONE SHOOT ONE KILL','PAGE & LANE','PAISLEWITHLOVE','PASTELLY','PASTELLYS','PINELABEL',
-        //     'RALYKA','RICE RICE','RODA PADATI','ROOTEO OFFICIAL','RYE STUDIO','SAIA MODEST',
-        //     'SAKARA KOPI BALI','SANVANINA','SERUMPUN','SHIHIN TAIWAN','SIMPLY JEANS','SIMPLY ROSE',
-        //     'SOEL PROJECT','SOLHÉR','SOOLHA','SOUFLAB','STACK MATES','STREET SNACKS','SWEET BERRY',
-        //     'TGIF PROJECT','THE BEST KAYND','THE LADIES AFFAIR','Thesilversky','WEAR LABEL','WETBRUSH',
-        //     'YE-RIN','YOOWLLD',
-        // ];
-
+        // The base list makes sure the requested merchant names exist.
+        // This does not delete or deactivate any existing stores.
         $stores = [
-            'Merchant Mombee', 'Merchant Trademark', 'Merchant WOF', 'Merchant PPM', 'Merchant BFF', 'Merchant Inacraft', 'Merchant Jacoweek'
+            'Merchant Mombee',
+            'Merchant Trademark',
+            'Merchant WOF',
+            'Merchant PPM',
+            'Merchant BFF',
+            'Merchant Inacraft',
+            'Merchant Jacoweek',
         ];
 
-
-
         foreach ($stores as $name) {
-            Store::firstOrCreate(['name' => $name], ['is_active' => true]);
+            Store::firstOrCreate(
+                ['name' => $name],
+                ['is_active' => true]
+            );
+        }
+
+        //Mombee
+        // Takabook, My Kids Collection
+        // Mirugo
+        // Ciakpo
+        // Crystal of The Sea
+        // Porto Kids
+        // Kooka
+        // Dooglee, Tuutuu
+        // Booboo
+        // Pigeon
+        // Paninti (Oonew, Emily, Bear, Sucvent, dll)
+        // Omica
+        // Cocolatte
+        // Pokana
+        // Cotton Mom
+        // Eclipse Hampers
+        // Yummy Bites
+        // Mooimom
+        // Libby Baby
+        // Gea Baby, Sanosan, Oryn
+        // Wetbrush
+        // Mustela, Interlac, Farlin, Motherlove
+        // Brothmaster
+        // Naomichan
+        // Sakumini
+        // Grouu
+        // Moell, Mom Uung
+        // Gently
+        // Morinaga, Morigro
+        // Morigro
+        // Pediasure
+        // Ace Kids
+        // Nutrilon
+        // Wyeth S26
+        // Frisian Flag
+        // Baby Happy
+        // Etawalin
+        // Enfagrow
+        // Kodomo
+
+        // Assign stores to areas here if you prefer seeding the area map.
+        // Any area name can be added as a key; each item is a store name.
+        // Example:
+        // $areaAssignments = [
+        //     'Hall 1' => ['Merchant Mombee', 'Merchant Trademark'],
+        //     'Hall 2' => ['Merchant WOF', 'Merchant PPM'],
+        // ];
+        //
+        // Leaving the map empty means you can create areas and assign stores
+        // through the Areas and Stores pages in the admin UI instead.
+        $areaAssignments = [
+            'TPH (Tembusan Permata Hijau)' => ['CoI (Collector of Indonesia)', 'OMO Market', 'PPM (Perfume Pop Market)', 'Jacoweek', 'FnB Bank Mandiri'],
+            'The Hall Senayan City (Lantai 8)' => ['Merchant Mombee', 'Merchant Trademark'],
+            'Lantai 5 Senayan City' => ['Inacraft', 'BFF', 'WOF', 'Erajaya', 'Blilbli', 'Optik Seis'],
+            'LG Senayan City' => ['Mandiri Travel Deals'],
+        ];
+
+        foreach ($areaAssignments as $areaName => $storeNames) {
+            $area = Area::firstOrCreate(['name' => trim($areaName)]);
+
+            foreach ($storeNames as $storeName) {
+                $store = Store::firstOrCreate(
+                    ['name' => trim($storeName)],
+                    ['is_active' => true]
+                );
+
+                // Updating the relationship is safe: claims continue to reference store_id.
+                if ((int) $store->area_id !== (int) $area->id) {
+                    $store->update(['area_id' => $area->id]);
+                }
+            }
         }
     }
 }

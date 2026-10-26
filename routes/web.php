@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AreaController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
@@ -87,9 +88,9 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->group(function () {
         'export',
     ])->name('claims.export');
 
-    // Store management.
-    Route::resource('stores', StoreController::class)
-        ->except(['show']);
+    // Area and store management.
+    Route::resource('areas', AreaController::class)->except(['show']);
+    Route::resource('stores', StoreController::class)->except(['show']);
 
     /*
     |--------------------------------------------------------------------------
