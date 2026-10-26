@@ -48,7 +48,29 @@
 
             <label>PIC name <span class="required">*</span><input required name="pic_name" value="{{ old('pic_name', $claim->pic_name) }}" placeholder="Person in charge"></label>
             <label>PIC phone number <span class="required">*</span><input required name="pic_phone" value="{{ old('pic_phone', $claim->pic_phone) }}" placeholder="e.g. 081234567890"></label>
-            <label>Total claimed (IDR) <span class="required">*</span><div class="input-prefix"><span>Rp</span><input required type="number" min="0.01" step="0.01" name="total_claimed" value="{{ old('total_claimed', $claim->total_claimed) }}" placeholder="500000"></div></label>
+            {{-- <label>Total claimed (IDR) <span class="required">*</span><div class="input-prefix"><span>Rp</span><input required type="number" min="0.01" step="0.01" name="total_claimed" value="{{ old('total_claimed', $claim->total_claimed) }}" placeholder="500000"></div></label> --}}
+            <label>
+            Total claimed (IDR)
+            <span class="required">*</span>
+
+            <div class="input-prefix">
+                <span>Rp</span>
+                <input
+                    type="number"
+                    name="total_claimed"
+                    value="{{ old('total_claimed', $claim->total_claimed ?? 0) }}"
+                    min="0"
+                    step="50000"
+                    readonly
+                    data-total-claimed
+                >
+            </div>
+
+            <small>
+                Automatically calculated from Voucher A and B.
+                Each voucher is worth Rp50,000.
+            </small>
+        </label>
             <label>Transaction date <span class="required">*</span><input required type="date" name="transaction_date" value="{{ old('transaction_date', $claim->transaction_date?->format('Y-m-d')) }}"></label>
             <label>Mandiri account number <span class="required">*</span><input required name="mandiri_account_number" value="{{ old('mandiri_account_number', $claim->mandiri_account_number) }}" placeholder="Account number"></label>
             <label>Account holder name <span class="required">*</span><input required name="account_holder_name" value="{{ old('account_holder_name', $claim->account_holder_name) }}" placeholder="Name as registered with bank"></label>

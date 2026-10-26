@@ -1,4 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
+  const totalInput = document.querySelector('[data-total-claimed]');
+  const voucherTextareas = document.querySelectorAll(
+      'textarea[name="voucher_codes[A]"], textarea[name="voucher_codes[B]"]'
+  );
+
+  if (!totalInput || voucherTextareas.length === 0) {
+      return;
+  }
+
+  const VOUCHER_VALUE = 50000;
+
+  function getUniqueVoucherCount(text) {
+      const codes = text
+          .split(/[\r\n,;]+/)
+          .map(code => code.trim())
+          .filter(Boolean);
+
+      return new Set(codes).size;
+  }
+
+  function updateTotalClaimed() {
+      let totalVoucherCount = 0;
+
+      voucherTextareas.forEach(textarea => {
+          totalVoucherCount += getUniqueVoucherCount(textarea.value);
+      });
+
+      totalInput.value = totalVoucherCount * VOUCHER_VALUE;
+  }
+
+  voucherTextareas.forEach(textarea => {
+      textarea.addEventListener('input', updateTotalClaimed);
+  });
+
+  // Calculate the amount immediately when the form opens.
+  updateTotalClaimed();
+
   // Keep area/store dropdowns in sync on both the claim form and dashboard filters.
   document.querySelectorAll('[data-area-select]').forEach((areaSelect) => {
     const scope = areaSelect.closest('form');
