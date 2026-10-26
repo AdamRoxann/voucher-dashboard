@@ -41,8 +41,10 @@ class ClaimController extends Controller
             + count($voucherCodes['B'] ?? [])
         ) * 50000;
         $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs', 'public');
-        $data['transfer_status'] = $data['transfer_status'] ?? 'pending';
-        if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
+        // $data['transfer_status'] = $data['transfer_status'] ?? 'pending';
+        // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
+        $data['transfer_status'] = 'pending';
+        $data['transfer_date'] = now()->toDateString();
         $claim = DB::transaction(function () use ($data, $voucherCodes) {
             $claim = Claim::create($data);
             foreach ($voucherCodes as $type => $codes) foreach ($codes as $code) $claim->vouchers()->create(['voucher_type'=>$type,'voucher_code'=>$code]);
@@ -74,8 +76,8 @@ class ClaimController extends Controller
             Storage::disk('public')->delete($claim->proof_image_path);
             $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs','public');
         } else { unset($data['proof_image']); }
-        $data['transfer_status'] = $data['transfer_status'] ?? $claim->transfer_status;
-        if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
+        // $data['transfer_status'] = $data['transfer_status'] ?? $claim->transfer_status;
+        // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
         DB::transaction(function () use ($claim, $data, $voucherCodes) { $claim->update($data); $claim->vouchers()->delete(); foreach ($voucherCodes as $type=>$codes) foreach ($codes as $code) $claim->vouchers()->create(['voucher_type'=>$type,'voucher_code'=>$code]); });
         return redirect()->route('dashboard')->with('success','Claim updated successfully.');
     }
@@ -83,8 +85,11 @@ class ClaimController extends Controller
     public function updateTransferStatus(Request $request, Claim $claim)
     {
         $data = $request->validate(['transfer_status'=>'required|in:pending,transferred','transfer_date'=>'nullable|date']);
-        if ($data['transfer_status'] === 'transferred' && empty($data['transfer_date'])) $data['transfer_date'] = now()->toDateString();
-        if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
+        // if ($data['transfer_status'] === 'transferred' && empty($data['transfer_date'])) $data['transfer_date'] = now()->toDateString();
+        // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
+        if (empty($data['transfer_date'])) {
+            $data['transfer_date'] = now()->toDateString();
+        }
         $claim->update($data); return back()->with('success','Transfer status updated.');
     }
     public function export(Request $request)

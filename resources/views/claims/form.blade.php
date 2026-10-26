@@ -100,7 +100,7 @@
         </div>
     </section>
 
-    <section class="form-section">
+    {{-- <section class="form-section">
         <div class="section-title"><span class="section-number">04</span><div><h3>Transfer tracking</h3><p>Keep payment status up to date for reconciliation.</p></div></div>
         <div class="form-grid">
             <!-- <label>Transfer status
@@ -110,7 +110,7 @@
             <label>Transfer date<input type="date" name="transfer_date" value="{{ old('transfer_date', $claim->transfer_date?->format('Y-m-d')) }}"></label>
             <label class="full-width">Internal notes <span class="optional">Optional</span><textarea name="notes" rows="3" placeholder="Add any notes for the operations team...">{{ old('notes', $claim->notes) }}</textarea></label>
         </div>
-    </section>
+    </section> --}}
 
     <div class="form-actions"><a href="{{ route('dashboard') }}" class="button button-outline">Cancel</a><button type="submit" class="button button-primary">{{ $claim->exists ? 'Save changes' : 'Save claim' }} <span>→</span></button></div>
 </form>
