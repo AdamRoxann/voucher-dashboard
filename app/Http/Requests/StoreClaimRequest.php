@@ -29,7 +29,7 @@ class StoreClaimRequest extends FormRequest
             'store_id' => ['required', 'integer', $storeRule],
             'pic_name' => ['required', 'string', 'max:150'],
             'pic_phone' => ['required', 'string', 'max:40'],
-            'total_claimed' => ['required', 'numeric', 'min:0.01', 'max:9999999999999.99'],
+            // 'total_claimed' => ['required', 'numeric', 'min:0.01', 'max:9999999999999.99'],
             'mandiri_account_number' => ['required', 'string', 'max:50'],
             'account_holder_name' => ['required', 'string', 'max:150'],
             'transaction_date' => ['required', 'date'],

@@ -36,6 +36,10 @@ class ClaimController extends Controller
         unset($data['proof_image'], $data['area_id']);
         $voucherCodes = $this->parseCodes($data['voucher_codes'] ?? []);
         unset($data['voucher_codes']);
+        $data['total_claimed'] = (
+            count($voucherCodes['A'] ?? [])
+            + count($voucherCodes['B'] ?? [])
+        ) * 50000;
         $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs', 'public');
         $data['transfer_status'] = $data['transfer_status'] ?? 'pending';
         if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
@@ -62,6 +66,10 @@ class ClaimController extends Controller
     public function update(StoreClaimRequest $request, Claim $claim)
     {
         $data = $request->validated(); unset($data['proof_image'], $data['area_id']); $voucherCodes = $this->parseCodes($data['voucher_codes'] ?? []); unset($data['voucher_codes']);
+        $data['total_claimed'] = (
+            count($voucherCodes['A'] ?? [])
+            + count($voucherCodes['B'] ?? [])
+        ) * 50000;
         if ($request->hasFile('proof_image')) {
             Storage::disk('public')->delete($claim->proof_image_path);
             $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs','public');
