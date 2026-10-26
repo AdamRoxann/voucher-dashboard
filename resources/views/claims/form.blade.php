@@ -24,9 +24,9 @@
     <section class="form-section">
         <div class="section-title"><span class="section-number">01</span><div><h3>Claim information</h3><p>Who submitted this claim, and for how much?</p></div></div>
         <div class="form-grid">
-            <label>Claim date <span class="required">*</span><input required type="date" name="claim_date" value="{{ old('claim_date', $claim->claim_date?->format('Y-m-d')) }}"></label>
+            <label> <span>Claim date <span class="required">*</span></span><input required type="date" name="claim_date" value="{{ old('claim_date', $claim->claim_date?->format('Y-m-d')) }}"></label>
 
-            <label>Area <span class="required">*</span>
+            <label><span>Area <span class="required">*</span></span>
                 <select required name="area_id" data-area-select>
                     <option value="">Choose an area first</option>
                     @foreach($areas as $area)
@@ -36,7 +36,7 @@
                 <small>Choose an area to limit the store list to that area.</small>
             </label>
 
-            <label>Store name <span class="required">*</span>
+            <label><span>Store name <span class="required">*</span></span> 
                 <select required name="store_id" data-store-select data-area-filter-required>
                     <option value="">Choose an area first</option>
                     @foreach($stores as $store)
@@ -46,12 +46,13 @@
                 <small>Only stores assigned to the selected area can be chosen.</small>
             </label>
 
-            <label>PIC name <span class="required">*</span><input required name="pic_name" value="{{ old('pic_name', $claim->pic_name) }}" placeholder="Person in charge"></label>
-            <label>PIC phone number <span class="required">*</span><input required name="pic_phone" value="{{ old('pic_phone', $claim->pic_phone) }}" placeholder="e.g. 081234567890"></label>
+            <label><span>PIC name <span class="required">*</span></span><input required name="pic_name" value="{{ old('pic_name', $claim->pic_name) }}" placeholder="Person in charge"></label>
+            <label><span>PIC phone number <span class="required">*</span></span><input required name="pic_phone" value="{{ old('pic_phone', $claim->pic_phone) }}" placeholder="e.g. 081234567890"></label>
             {{-- <label>Total claimed (IDR) <span class="required">*</span><div class="input-prefix"><span>Rp</span><input required type="number" min="0.01" step="0.01" name="total_claimed" value="{{ old('total_claimed', $claim->total_claimed) }}" placeholder="500000"></div></label> --}}
             <label>
+            <span>
             Total claimed (IDR)
-            <span class="required">*</span>
+            <span class="required">*</span></span>
 
             <div class="input-prefix">
                 <span>Rp</span>
@@ -71,9 +72,9 @@
                 Each voucher is worth Rp50,000.
             </small>
         </label>
-            <label>Transaction date <span class="required">*</span><input required type="date" name="transaction_date" value="{{ old('transaction_date', $claim->transaction_date?->format('Y-m-d')) }}"></label>
-            <label>Mandiri account number <span class="required">*</span><input required name="mandiri_account_number" value="{{ old('mandiri_account_number', $claim->mandiri_account_number) }}" placeholder="Account number"></label>
-            <label>Account holder name <span class="required">*</span><input required name="account_holder_name" value="{{ old('account_holder_name', $claim->account_holder_name) }}" placeholder="Name as registered with bank"></label>
+            <label><span>Transaction date <span class="required">*</span></span><input required type="date" name="transaction_date" value="{{ old('transaction_date', $claim->transaction_date?->format('Y-m-d')) }}"></label>
+            <label><span>Mandiri account number <span class="required">*</span></span><input required name="mandiri_account_number" value="{{ old('mandiri_account_number', $claim->mandiri_account_number) }}" placeholder="Account number"></label>
+            <label><span>Account holder name <span class="required">*</span></span><input required name="account_holder_name" value="{{ old('account_holder_name', $claim->account_holder_name) }}" placeholder="Name as registered with bank"></label>
         </div>
     </section>
 
