@@ -113,4 +113,49 @@
 
     <div class="form-actions"><a href="{{ route('dashboard') }}" class="button button-outline">Cancel</a><button type="submit" class="button button-primary">{{ $claim->exists ? 'Save changes' : 'Save claim' }} <span>→</span></button></div>
 </form>
+
+<script>
+(function () {
+    const totalInput = document.querySelector('[data-total-claimed]');
+    const voucherTextareas = document.querySelectorAll(
+        '[data-voucher-textarea]'
+    );
+
+    if (!totalInput || voucherTextareas.length === 0) {
+        return;
+    }
+
+    const VOUCHER_VALUE = 50000;
+
+    function countUniqueCodes(text) {
+        const codes = text
+            .split(/[\r\n,;]+/)
+            .map(code => code.trim())
+            .filter(code => code !== '');
+
+        return new Set(codes).size;
+    }
+
+    function updateTotal() {
+        let totalCodes = 0;
+
+        voucherTextareas.forEach(textarea => {
+            totalCodes += countUniqueCodes(textarea.value);
+        });
+
+        totalInput.value = totalCodes * VOUCHER_VALUE;
+
+        // Notify other scripts that the amount has changed.
+        totalInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    voucherTextareas.forEach(textarea => {
+        textarea.addEventListener('input', updateTotal);
+    });
+
+    // Calculate immediately when creating or editing a claim.
+    updateTotal();
+})();
+</script>
+
 @endsection
