@@ -94,17 +94,40 @@ class AdminController extends Controller
             ->with('success', $store->is_active ? 'Store activated.' : 'Store deactivated.');
     }
 
+    // public function updateTransfer(Request $request, Claim $claim)
+    // {
+    //     $data = $request->validate([
+    //         'transfer_status' => ['required', Rule::in(['pending', 'transferred'])],
+    //         'transfer_date' => ['nullable', 'date'],
+    //     ]);
+    //     $data['transfer_date'] = $data['transfer_status'] === 'transferred'
+    //         ? ($data['transfer_date'] ?? now()->toDateString())
+    //         : null;
+    //     $claim->update($data);
+
+    //     return redirect()->route('admin.index', ['#' => 'transfers'])->with('success', 'Transfer status updated.');
+    // }
     public function updateTransfer(Request $request, Claim $claim)
     {
         $data = $request->validate([
-            'transfer_status' => ['required', Rule::in(['pending', 'transferred'])],
+            'transfer_status' => [
+                'required',
+                Rule::in(['pending', 'transferred', 'rejected']),
+            ],
             'transfer_date' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
-        $data['transfer_date'] = $data['transfer_status'] === 'transferred'
-            ? ($data['transfer_date'] ?? now()->toDateString())
-            : null;
+
+        // Use today's Jakarta date if the admin leaves the date blank.
+        if (empty($data['transfer_date'])) {
+            $data['transfer_date'] = now()->toDateString();
+        }
+
+        // Save status, date, and notes together.
         $claim->update($data);
 
-        return redirect()->route('admin.index', ['#' => 'transfers'])->with('success', 'Transfer status updated.');
+        return redirect()
+            ->route('admin.index', ['#' => 'transfers'])
+            ->with('success', 'Claim status and notes updated.');
     }
 }

@@ -189,8 +189,23 @@
                         </td>
 
                         <td>
-                            <span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">
+                            {{-- <span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">
                                 {{ $claim->transfer_status === 'transferred' ? '✓ Transferred' : '○ Pending' }}
+                            </span> --}}
+                            <span class="status-badge {{
+                                $claim->transfer_status === 'transferred'
+                                    ? 'status-done'
+                                    : ($claim->transfer_status === 'rejected'
+                                        ? 'status-rejected'
+                                        : 'status-pending')
+                            }}">
+                                {{
+                                    $claim->transfer_status === 'transferred'
+                                        ? '✓ Transferred'
+                                        : ($claim->transfer_status === 'rejected'
+                                            ? '✕ Rejected'
+                                            : '○ Pending')
+                                }}
                             </span>
                         </td>
 
@@ -199,7 +214,7 @@
                         </td>
 
                         <td style="display: flex; align-items: center;">
-                            <form class="admin-transfer-form"
+                            {{-- <form class="admin-transfer-form"
                                   method="POST"
                                   action="{{ route('admin.claims.transfer', $claim) }}">
                                 @csrf
@@ -221,6 +236,66 @@
                                        value="{{ $claim->transfer_date?->format('Y-m-d') }}">
 
                                 <button class="button button-primary button-small">
+                                    Save
+                                </button>
+                            </form> --}}
+                            <form
+                                class="admin-transfer-form"
+                                method="POST"
+                                action="{{ route('admin.claims.transfer', $claim) }}"
+                            >
+                                @csrf
+                                @method('PATCH')
+
+                                <select
+                                    name="transfer_status"
+                                    aria-label="Transfer status"
+                                    required
+                                >
+                                    <option
+                                        value="pending"
+                                        @selected($claim->transfer_status === 'pending')
+                                    >
+                                        Pending transfer
+                                    </option>
+
+                                    <option
+                                        value="transferred"
+                                        @selected($claim->transfer_status === 'transferred')
+                                    >
+                                        Transferred
+                                    </option>
+
+                                    <option
+                                        value="rejected"
+                                        @selected($claim->transfer_status === 'rejected')
+                                    >
+                                        Rejected
+                                    </option>
+                                </select>
+
+                                <label class="admin-notes-field">
+                                    <span>Notes (optional)</span>
+
+                                    <textarea
+                                        name="notes"
+                                        rows="2"
+                                        maxlength="2000"
+                                        placeholder="Reason for rejection or internal notes..."
+                                    >{{ $claim->notes }}</textarea>
+                                </label>
+
+                                <input
+                                    type="date"
+                                    name="transfer_date"
+                                    aria-label="Transfer date"
+                                    value="{{ $claim->transfer_date?->format('Y-m-d') ?? now()->format('Y-m-d') }}"
+                                >
+
+                                <button
+                                    type="submit"
+                                    class="button button-primary button-small"
+                                >
                                     Save
                                 </button>
                             </form>
