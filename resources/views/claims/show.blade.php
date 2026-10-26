@@ -7,7 +7,7 @@
 </div>
 <section class="panel" style="overflow:hidden;padding:0;margin-bottom:22px">
   <div style="padding:24px;background:linear-gradient(120deg,#174aa8,#2865c7);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap">
-    <div><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Merchant / Store</div><h2 style="margin:7px 0;font-size:28px;color:#fff">{{ $claim->store->name }}</h2><div style="opacity:.88">Submitted {{ $claim->created_at->format('d M Y · H:i') }}</div></div>
+    <div><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Merchant / Store</div><h2 style="margin:7px 0;font-size:28px;color:#fff">{{ $claim->store->name }}</h2><div style="opacity:.88">Area: {{ $claim->store->area?->name ?? 'Unassigned' }} · Submitted {{ $claim->created_at->format('d M Y · H:i') }}</div></div>
     <span class="status-badge {{ $claim->transfer_status==='transferred'?'status-done':'status-pending' }}">{{ $claim->transfer_status==='transferred'?'✓ Sudah ditransfer':'○ Belum ditransfer' }}</span>
   </div>
   <div style="padding:24px">

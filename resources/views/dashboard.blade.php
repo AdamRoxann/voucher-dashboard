@@ -58,15 +58,28 @@
         </label>
 
         <label>
+            Area
+            <select name="area_id" data-area-select>
+                <option value="">All areas</option>
+                @foreach($areas as $area)
+                    <option value="{{ $area->id }}" @selected((string) request('area_id') === (string) $area->id)>
+                        {{ $area->name }}
+                    </option>
+                @endforeach
+            </select>
+        </label>
+
+        <label>
             Store
-            <select name="store_id">
+            <select name="store_id" data-store-select>
                 <option value="">All stores</option>
                 @foreach($stores as $store)
                     <option
                         value="{{ $store->id }}"
+                        data-area-id="{{ $store->area_id }}"
                         @selected((string) request('store_id') === (string) $store->id)
                     >
-                        {{ $store->name }}
+                        {{ $store->name }}{{ $store->area ? ' — '.$store->area->name : ' — Unassigned' }}
                     </option>
                 @endforeach
             </select>
@@ -255,7 +268,7 @@
                     {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
                 </span>
 
-                <span class="leader-name">{{ $store->name }}</span>
+                <span class="leader-name">{{ $store->name }} — {{ $store->area?->name ?? 'Unassigned' }}</span>
 
                 <div class="leader-track">
                     <div
@@ -283,8 +296,9 @@
             </p>
         </div>
 
-        <div>
+        <div class="heading-actions">
         @if($isAdmin)
+            <a href="{{ route('areas.index') }}" class="button button-outline">Manage areas</a>
             <a
                 href="{{ route('claims.export', request()->query()) }}"
                 class="button button-outline"
@@ -331,9 +345,8 @@
 
                         <td>
                             <strong>{{ $claim->store->name }}</strong>
-                            <small>
-                                {{ $claim->pic_name }} · {{ $claim->pic_phone }}
-                            </small>
+                            <small>Area: {{ $claim->store->area?->name ?? 'Unassigned' }}</small>
+                            <small>{{ $claim->pic_name }} · {{ $claim->pic_phone }}</small>
                         </td>
 
                         <td class="amount">

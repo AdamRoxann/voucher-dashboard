@@ -18,7 +18,7 @@
 </header>
 <nav class="nav-wrap"><a class="brand" href="{{ route('dashboard') }}">
     <img class="logo" style="width: 42px; height: 42px;" src="{{ asset('images/logo.png') }}" alt="Campaign banner placeholder">
-    <span>Mandiri <small>CLAIM PORTAL</small></span></a><div class="nav-links"><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Overview</a><a href="{{ route('claims.create') }}" class="{{ request()->routeIs('claims.create') ? 'active' : '' }}">New claim</a><a href="{{ route('stores.index') }}" class="{{ request()->routeIs('stores.*') ? 'active' : '' }}">Stores</a></div><a class="button button-dark nav-action" href="{{ route('claims.export', request()->query()) }}">↓ Export Excel</a></nav>
+    <span>Mandiri <small>CLAIM PORTAL</small></span></a><div class="nav-links"><a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Overview</a><a href="{{ route('claims.create') }}" class="{{ request()->routeIs('claims.create') ? 'active' : '' }}">New claim</a><a href="{{ route('stores.index') }}" class="{{ request()->routeIs('stores.*') ? 'active' : '' }}">Stores</a>@if(auth()->check() && auth()->user()->is_admin)<a href="{{ route('areas.index') }}" class="{{ request()->routeIs('areas.*') ? 'active' : '' }}">Areas</a>@endif</div><a class="button button-dark nav-action" href="{{ route('claims.export', request()->query()) }}">↓ Export Excel</a></nav>
 <main class="container">
     @if(session('success'))<div class="alert success">{{ session('success') }}</div>@endif
     @if($errors->any())<div class="alert error"><strong>Please check the form:</strong><ul>@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
