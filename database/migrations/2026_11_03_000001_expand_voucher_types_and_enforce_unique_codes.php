@@ -54,9 +54,20 @@ return new class extends Migration
             SET c.total_claimed = COALESCE(voucher_totals.calculated_total, 0)
         ");
 
+        // Schema::table('claim_vouchers', function (Blueprint $table) {
+        //     $table->dropUnique('claim_vouchers_claim_id_voucher_type_voucher_code_unique');
+        //     $table->unique('voucher_code', 'claim_vouchers_voucher_code_unique');
+        // });
         Schema::table('claim_vouchers', function (Blueprint $table) {
-            $table->dropUnique('claim_vouchers_claim_id_voucher_type_voucher_code_unique');
-            $table->unique('voucher_code', 'claim_vouchers_voucher_code_unique');
+
+            // Keep the existing composite index because MySQL uses it
+            // to support the claim_id foreign key.
+
+            // Enforce global uniqueness across all voucher types and claims.
+            $table->unique(
+                'voucher_code',
+                'claim_vouchers_voucher_code_unique'
+            );
         });
     }
 
@@ -72,12 +83,19 @@ return new class extends Migration
             );
         }
 
+        // Schema::table('claim_vouchers', function (Blueprint $table) {
+        //     $table->dropUnique('claim_vouchers_voucher_code_unique');
+        //     $table->unique(
+        //         ['claim_id', 'voucher_type', 'voucher_code'],
+        //         'claim_vouchers_claim_id_voucher_type_voucher_code_unique'
+        //     );
+        // });
         Schema::table('claim_vouchers', function (Blueprint $table) {
+
+            // The original composite index was never removed.
+            // Only remove the global unique index.
             $table->dropUnique('claim_vouchers_voucher_code_unique');
-            $table->unique(
-                ['claim_id', 'voucher_type', 'voucher_code'],
-                'claim_vouchers_claim_id_voucher_type_voucher_code_unique'
-            );
+
         });
 
         DB::statement("
