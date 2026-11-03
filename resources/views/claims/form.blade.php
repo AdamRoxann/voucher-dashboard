@@ -68,8 +68,7 @@
             </div>
 
             <small>
-                Automatically calculated from Voucher A and B.
-                Each voucher is worth Rp50,000.
+                Automatically calculated: A–D are Rp50,000 each; E is Rp100,000.
             </small>
         </label>
             <label><span>Transaction date <span class="required">*</span></span><input required type="date" name="transaction_date" value="{{ old('transaction_date', $claim->transaction_date?->format('Y-m-d')) }}"></label>
@@ -85,9 +84,9 @@
     </section>
 
     <section class="form-section">
-        <div class="section-title"><span class="section-number">03</span><div><h3>Voucher codes</h3><p>Paste codes separated by commas or new lines. Counts are calculated automatically.</p></div></div>
+        <div class="section-title"><span class="section-number">03</span><div><h3>Voucher codes</h3><p>Paste codes separated by commas or new lines. Every code can only be claimed once.</p></div></div>
         <div class="voucher-input-grid">
-            @foreach(['A', 'B'] as $type)
+            @foreach(['A', 'B', 'C', 'D', 'E'] as $type)
                 @php($existingCodes = $claim->exists ? $claim->vouchers->where('voucher_type', $type)->pluck('voucher_code')->implode("\n") : '')
                 @php($voucherInput = old('voucher_codes.'.$type, $existingCodes))
                 @php($voucherCount = count(array_filter(preg_split('/[\r\n,;]+/', $voucherInput))))
@@ -97,6 +96,7 @@
                     <div class="voucher-card-foot"><span>One code per line or comma-separated</span><strong>Count: <span data-count-number>{{ $voucherCount }}</span></strong></div>
                 </div>
             @endforeach
+            <p class="voucher-duplicate-warning" data-voucher-duplicate-warning hidden></p>
         </div>
     </section>
 
@@ -115,48 +115,5 @@
     <div class="form-actions"><a href="{{ route('dashboard') }}" class="button button-outline">Cancel</a><button type="submit" class="button button-primary">{{ $claim->exists ? 'Save changes' : 'Save claim' }} <span>→</span></button></div>
 </form>
 
-<script>
-(function () {
-    const totalInput = document.querySelector('[data-total-claimed]');
-    const voucherTextareas = document.querySelectorAll(
-        '[data-voucher-textarea]'
-    );
-
-    if (!totalInput || voucherTextareas.length === 0) {
-        return;
-    }
-
-    const VOUCHER_VALUE = 50000;
-
-    function countUniqueCodes(text) {
-        const codes = text
-            .split(/[\r\n,;]+/)
-            .map(code => code.trim())
-            .filter(code => code !== '');
-
-        return new Set(codes).size;
-    }
-
-    function updateTotal() {
-        let totalCodes = 0;
-
-        voucherTextareas.forEach(textarea => {
-            totalCodes += countUniqueCodes(textarea.value);
-        });
-
-        totalInput.value = totalCodes * VOUCHER_VALUE;
-
-        // Notify other scripts that the amount has changed.
-        totalInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    voucherTextareas.forEach(textarea => {
-        textarea.addEventListener('input', updateTotal);
-    });
-
-    // Calculate immediately when creating or editing a claim.
-    updateTotal();
-})();
-</script>
 
 @endsection

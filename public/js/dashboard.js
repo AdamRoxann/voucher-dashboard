@@ -1,40 +1,85 @@
 document.addEventListener('DOMContentLoaded', () => {
   const totalInput = document.querySelector('[data-total-claimed]');
-  const voucherTextareas = document.querySelectorAll(
-      'textarea[name="voucher_codes[A]"], textarea[name="voucher_codes[B]"]'
-  );
+  const voucherTextareas = document.querySelectorAll('[data-voucher-textarea]');
+  const duplicateWarning = document.querySelector('[data-voucher-duplicate-warning]');
 
-  if (!totalInput || voucherTextareas.length === 0) {
-      return;
+  const voucherValues = {
+    A: 50000,
+    B: 50000,
+    C: 50000,
+    D: 50000,
+    E: 100000,
+  };
+
+  function splitCodes(text) {
+    return text
+      .split(/[\r\n,;]+/)
+      .map(code => code.trim().toUpperCase())
+      .filter(Boolean);
   }
 
-  const VOUCHER_VALUE = 50000;
+  function updateVoucherTotals() {
+    if (!totalInput || voucherTextareas.length === 0) return;
 
-  function getUniqueVoucherCount(text) {
-      const codes = text
-          .split(/[\r\n,;]+/)
-          .map(code => code.trim())
-          .filter(Boolean);
+    let total = 0;
+    const seenCodes = new Set();
+    const duplicateCodes = new Set();
 
-      return new Set(codes).size;
-  }
+    voucherTextareas.forEach(textarea => {
+      const match = textarea.name.match(/^voucher_codes\[([A-E])\]$/);
+      if (!match) return;
 
-  function updateTotalClaimed() {
-      let totalVoucherCount = 0;
+      const type = match[1];
+      const codes = splitCodes(textarea.value);
+      const uniqueInType = new Set(codes);
+      const card = textarea.closest('.voucher-input-card');
+      const countLabel = card?.querySelector('[data-count-for]');
+      const countNumber = card?.querySelector('[data-count-number]');
 
-      voucherTextareas.forEach(textarea => {
-          totalVoucherCount += getUniqueVoucherCount(textarea.value);
+      if (countLabel) {
+        countLabel.textContent = `${uniqueInType.size} ${uniqueInType.size === 1 ? 'code' : 'codes'}`;
+      }
+      if (countNumber) {
+        countNumber.textContent = uniqueInType.size;
+      }
+
+      uniqueInType.forEach(code => {
+        if (seenCodes.has(code)) {
+          duplicateCodes.add(code);
+        } else {
+          seenCodes.add(code);
+          total += voucherValues[type];
+        }
       });
 
-      totalInput.value = totalVoucherCount * VOUCHER_VALUE;
+      // Repeated code in the same voucher textarea is also invalid.
+      if (codes.length !== uniqueInType.size) {
+        const counts = {};
+        codes.forEach(code => counts[code] = (counts[code] || 0) + 1);
+        Object.entries(counts).forEach(([code, count]) => {
+          if (count > 1) duplicateCodes.add(code);
+        });
+      }
+    });
+
+    totalInput.value = total;
+
+    if (duplicateWarning) {
+      if (duplicateCodes.size > 0) {
+        duplicateWarning.hidden = false;
+        duplicateWarning.textContent = `Duplicate code(s): ${Array.from(duplicateCodes).join(', ')}. Each voucher code can only be used once.`;
+      } else {
+        duplicateWarning.hidden = true;
+        duplicateWarning.textContent = '';
+      }
+    }
   }
 
   voucherTextareas.forEach(textarea => {
-      textarea.addEventListener('input', updateTotalClaimed);
+    textarea.addEventListener('input', updateVoucherTotals);
   });
 
-  // Calculate the amount immediately when the form opens.
-  updateTotalClaimed();
+  updateVoucherTotals();
 
   // Keep area/store dropdowns in sync on both the claim form and dashboard filters.
   document.querySelectorAll('[data-area-select]').forEach((areaSelect) => {
@@ -79,20 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     areaSelect.addEventListener('change', () => updateStoreOptions(true));
     updateStoreOptions(false);
-  });
-
-  document.querySelectorAll('[data-voucher-textarea]').forEach((textarea) => {
-    const card = textarea.closest('.voucher-input-card');
-    const countLabel = card.querySelector('[data-count-for]');
-    const countNumber = card.querySelector('[data-count-number]');
-    const update = () => {
-      const codes = textarea.value.split(/[\r\n,;]+/).map(s => s.trim()).filter(Boolean);
-      const unique = [...new Set(codes)];
-      countLabel.textContent = `${unique.length} ${unique.length === 1 ? 'code' : 'codes'}`;
-      countNumber.textContent = unique.length;
-    };
-    textarea.addEventListener('input', update);
-    update();
   });
 
   const fileInput = document.querySelector('[data-file-input]');

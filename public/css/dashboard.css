@@ -53,3 +53,17 @@
 /* Area/store hierarchy */
 .page-heading-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.admin-add-store select{flex:0 1 220px;min-width:160px;border:1px solid #d8e0ec;border-radius:8px;background:#fff;padding:10px 12px;color:#18314d;font:inherit}.admin-store-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}.admin-store-actions form{margin:0}.admin-store-row>div:first-child{min-width:0}.admin-store-row strong{overflow-wrap:anywhere}
 @media(max-width:700px){.page-heading-actions{width:100%}.page-heading-actions .button{flex:1}.admin-add-store select{flex:auto;width:100%}.admin-store-actions{flex-wrap:wrap;justify-content:flex-start}}
+
+/* Additional voucher types and duplicate-code feedback */
+.type-d{background:#f0eaff;color:#6941c6}
+.type-e{background:#e5f7f7;color:#087e83}
+.fill-d{background:#6941c6}
+.fill-e{background:#087e83}
+.pill-d{background:#f0eaff;color:#6941c6}
+.pill-e{background:#e5f7f7;color:#087e83}
+.voucher-border-d{border-top-color:#6941c6}
+.voucher-border-e{border-top-color:#087e83}
+.voucher-input-grid{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.voucher-duplicate-warning{margin:12px 0 0;padding:10px 12px;border:1px solid #ffd4ce;border-radius:8px;background:#fff0ee;color:#a53f35;font-size:11px;font-weight:700}
+
+.voucher-duplicate-warning{grid-column:1/-1}
