@@ -115,7 +115,7 @@
                 Voucher type
                 <select name="voucher_type">
                     <option value="">All types</option>
-                    @foreach(['A', 'B'] as $type)
+                    @foreach(['A', 'B', 'C', 'D', 'E'] as $type)
                         <option value="{{ $type }}"
                             @selected(request('voucher_type') === $type)>
                             Voucher {{ $type }}
@@ -171,7 +171,7 @@
 
                         <td>
                             <div class="voucher-pills">
-                                @foreach(['A', 'B'] as $type)
+                                @foreach(['A', 'B', 'C', 'D', 'E'] as $type)
                                     @php
                                         $count = $claim->vouchers
                                             ->where('voucher_type', $type)

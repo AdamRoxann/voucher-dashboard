@@ -8,7 +8,9 @@ use App\Models\Claim;
 use App\Models\Area;
 use App\Models\ClaimVoucher;
 use App\Models\Store;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
@@ -16,6 +18,14 @@ use ZipArchive;
 
 class ClaimController extends Controller
 {
+    private const VOUCHER_VALUES = [
+        'A' => 50000,
+        'B' => 50000,
+        'C' => 50000,
+        'D' => 50000,
+        'E' => 100000,
+    ];
+
     public function show(Claim $claim)
     {
         $claim->load(['store.area', 'vouchers']);
@@ -34,22 +44,40 @@ class ClaimController extends Controller
     {
         $data = $request->validated();
         unset($data['proof_image'], $data['area_id']);
+
         $voucherCodes = $this->parseCodes($data['voucher_codes'] ?? []);
         unset($data['voucher_codes']);
-        $data['total_claimed'] = (
-            count($voucherCodes['A'] ?? [])
-            + count($voucherCodes['B'] ?? [])
-        ) * 50000;
+
+        $data['total_claimed'] = $this->calculateTotalClaimed($voucherCodes);
         $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs', 'public');
-        // $data['transfer_status'] = $data['transfer_status'] ?? 'pending';
-        // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
         $data['transfer_status'] = 'pending';
         $data['transfer_date'] = now()->toDateString();
-        $claim = DB::transaction(function () use ($data, $voucherCodes) {
-            $claim = Claim::create($data);
-            foreach ($voucherCodes as $type => $codes) foreach ($codes as $code) $claim->vouchers()->create(['voucher_type'=>$type,'voucher_code'=>$code]);
-            return $claim;
-        });
+
+        try {
+            DB::transaction(function () use ($data, $voucherCodes) {
+                $claim = Claim::create($data);
+
+                foreach ($voucherCodes as $type => $codes) {
+                    foreach ($codes as $code) {
+                        $claim->vouchers()->create([
+                            'voucher_type' => $type,
+                            'voucher_code' => $code,
+                        ]);
+                    }
+                }
+            });
+        } catch (QueryException $exception) {
+            Storage::disk('public')->delete($data['proof_image_path']);
+
+            if (($exception->errorInfo[1] ?? null) === 1062) {
+                throw ValidationException::withMessages([
+                    'voucher_codes' => 'One or more voucher codes have already been claimed. Please remove the duplicate codes and try again.',
+                ]);
+            }
+
+            throw $exception;
+        }
+
         return redirect()->route('dashboard')->with('success', 'Claim saved successfully.');
     }
     public function edit(Claim $claim)
@@ -67,19 +95,55 @@ class ClaimController extends Controller
     }
     public function update(StoreClaimRequest $request, Claim $claim)
     {
-        $data = $request->validated(); unset($data['proof_image'], $data['area_id']); $voucherCodes = $this->parseCodes($data['voucher_codes'] ?? []); unset($data['voucher_codes']);
-        $data['total_claimed'] = (
-            count($voucherCodes['A'] ?? [])
-            + count($voucherCodes['B'] ?? [])
-        ) * 50000;
+        $data = $request->validated();
+        unset($data['proof_image'], $data['area_id']);
+
+        $voucherCodes = $this->parseCodes($data['voucher_codes'] ?? []);
+        unset($data['voucher_codes']);
+
+        $data['total_claimed'] = $this->calculateTotalClaimed($voucherCodes);
+
+        $oldProofPath = $claim->proof_image_path;
+        $newProofPath = null;
+
         if ($request->hasFile('proof_image')) {
-            Storage::disk('public')->delete($claim->proof_image_path);
-            $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs','public');
-        } else { unset($data['proof_image']); }
-        // $data['transfer_status'] = $data['transfer_status'] ?? $claim->transfer_status;
-        // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
-        DB::transaction(function () use ($claim, $data, $voucherCodes) { $claim->update($data); $claim->vouchers()->delete(); foreach ($voucherCodes as $type=>$codes) foreach ($codes as $code) $claim->vouchers()->create(['voucher_type'=>$type,'voucher_code'=>$code]); });
-        return redirect()->route('dashboard')->with('success','Claim updated successfully.');
+            $newProofPath = $request->file('proof_image')->store('voucher-proofs', 'public');
+            $data['proof_image_path'] = $newProofPath;
+        }
+
+        try {
+            DB::transaction(function () use ($claim, $data, $voucherCodes) {
+                $claim->update($data);
+                $claim->vouchers()->delete();
+
+                foreach ($voucherCodes as $type => $codes) {
+                    foreach ($codes as $code) {
+                        $claim->vouchers()->create([
+                            'voucher_type' => $type,
+                            'voucher_code' => $code,
+                        ]);
+                    }
+                }
+            });
+        } catch (QueryException $exception) {
+            if ($newProofPath) {
+                Storage::disk('public')->delete($newProofPath);
+            }
+
+            if (($exception->errorInfo[1] ?? null) === 1062) {
+                throw ValidationException::withMessages([
+                    'voucher_codes' => 'One or more voucher codes have already been claimed. Please remove the duplicate codes and try again.',
+                ]);
+            }
+
+            throw $exception;
+        }
+
+        if ($newProofPath && $oldProofPath) {
+            Storage::disk('public')->delete($oldProofPath);
+        }
+
+        return redirect()->route('dashboard')->with('success', 'Claim updated successfully.');
     }
     public function destroy(Claim $claim) { Storage::disk('public')->delete($claim->proof_image_path); $claim->delete(); return back()->with('success','Claim deleted.'); }
     public function updateTransferStatus(Request $request, Claim $claim)
@@ -99,12 +163,39 @@ class ClaimController extends Controller
     }
     private function parseCodes(array $input): array
     {
-        $out=[];
-        foreach (['A','B','C'] as $type) {
-            $raw = preg_split('/[\r\n,;]+/', $input[$type] ?? '', -1, PREG_SPLIT_NO_EMPTY);
-            $out[$type] = array_values(array_unique(array_filter(array_map(fn($v)=>trim($v), $raw))));
+        $out = [];
+
+        foreach (array_keys(self::VOUCHER_VALUES) as $type) {
+            $raw = preg_split(
+                '/[\r\n,;]+/',
+                $input[$type] ?? '',
+                -1,
+                PREG_SPLIT_NO_EMPTY
+            );
+
+            $normalized = array_map(
+                fn ($value) => strtoupper(trim($value)),
+                $raw
+            );
+
+            $out[$type] = array_values(array_unique(array_filter(
+                $normalized,
+                fn ($value) => $value !== ''
+            )));
         }
+
         return $out;
+    }
+
+    private function calculateTotalClaimed(array $voucherCodes): int
+    {
+        $total = 0;
+
+        foreach (self::VOUCHER_VALUES as $type => $value) {
+            $total += count($voucherCodes[$type] ?? []) * $value;
+        }
+
+        return $total;
     }
 
     public function downloadProofs(Request $request)
