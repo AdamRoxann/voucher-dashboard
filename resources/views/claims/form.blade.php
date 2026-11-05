@@ -79,7 +79,7 @@
 
     <section class="form-section">
         <div class="section-title"><span class="section-number">02</span><div><h3>Voucher proof</h3><p>Upload a clear receipt or transaction proof image.</p></div></div>
-        <label class="upload-zone"><input type="file" name="proof_image" accept=".jpg,.jpeg,.png,.webp,.heic,image/*" {{ $claim->exists ? '' : 'required' }} data-file-input><span class="upload-icon">↑</span><strong data-file-name>{{ $claim->exists ? 'Choose a new image to replace the current proof' : 'Click to upload or drag your image here' }}</strong><small>JPG, PNG, WEBP or HEIC · Maximum 5 MB</small></label>
+        <label class="upload-zone"><input type="file" name="proof_image" accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.tif,.tiff,.avif,.heic,.heif,.jp2,.j2k" {{ $claim->exists ? '' : 'required' }} data-file-input><span class="upload-icon">↑</span><strong data-file-name>{{ $claim->exists ? 'Choose a new image to replace the current proof' : 'Click to upload or drag your image here' }}</strong><small>JPG, PNG, WEBP, GIF, BMP, TIFF, AVIF or HEIC/HEIF · Maximum 15 MB</small></label>
         @if($claim->exists && $claim->proof_image_path)<p class="current-proof">Current proof: <a target="_blank" rel="noopener" href="{{ Storage::disk('public')->url($claim->proof_image_path) }}">View uploaded image ↗</a></p>@endif
     </section>
 

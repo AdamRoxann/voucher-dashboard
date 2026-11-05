@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     libxml2-dev \
     libonig-dev \
+    imagemagick \
+    libheif-examples \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql \
@@ -24,6 +26,15 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Allow larger mobile photos while keeping the request size above the file limit.
+RUN printf '%s\n' \
+    'upload_max_filesize=16M' \
+    'post_max_size=18M' \
+    'memory_limit=256M' \
+    'max_execution_time=60' \
+    'max_input_time=60' \
+    > /usr/local/etc/php/conf.d/uploads.ini
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
