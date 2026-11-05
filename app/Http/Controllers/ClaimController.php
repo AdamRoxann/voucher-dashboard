@@ -8,6 +8,7 @@ use App\Models\Claim;
 use App\Models\Area;
 use App\Models\ClaimVoucher;
 use App\Models\Store;
+use App\Support\ProofImageProcessor;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -49,7 +50,7 @@ class ClaimController extends Controller
         unset($data['voucher_codes']);
 
         $data['total_claimed'] = $this->calculateTotalClaimed($voucherCodes);
-        $data['proof_image_path'] = $request->file('proof_image')->store('voucher-proofs', 'public');
+        $data['proof_image_path'] = app(ProofImageProcessor::class)->store($request->file('proof_image'));
         $data['transfer_status'] = 'pending';
         $data['transfer_date'] = now()->toDateString();
 
@@ -107,7 +108,7 @@ class ClaimController extends Controller
         $newProofPath = null;
 
         if ($request->hasFile('proof_image')) {
-            $newProofPath = $request->file('proof_image')->store('voucher-proofs', 'public');
+            $newProofPath = app(ProofImageProcessor::class)->store($request->file('proof_image'));
             $data['proof_image_path'] = $newProofPath;
         }
 
@@ -148,10 +149,7 @@ class ClaimController extends Controller
     public function destroy(Claim $claim) { Storage::disk('public')->delete($claim->proof_image_path); $claim->delete(); return back()->with('success','Claim deleted.'); }
     public function updateTransferStatus(Request $request, Claim $claim)
     {
-        $data = $request->validate([
-            'transfer_status' => 'required|in:pending,approved,transferred,rejected',
-            'transfer_date' => 'nullable|date',
-        ]);
+        $data = $request->validate(['transfer_status'=>'required|in:pending,approved,transferred,rejected','transfer_date'=>'nullable|date']);
         // if ($data['transfer_status'] === 'transferred' && empty($data['transfer_date'])) $data['transfer_date'] = now()->toDateString();
         // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
         if (empty($data['transfer_date'])) {

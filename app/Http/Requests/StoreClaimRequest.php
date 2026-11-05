@@ -35,11 +35,12 @@ class StoreClaimRequest extends FormRequest
             'mandiri_account_number' => ['required', 'string', 'max:50'],
             'account_holder_name' => ['required', 'string', 'max:150'],
             'transaction_date' => ['required', 'date'],
+            // Validate this as a file first. The processor checks the actual
+            // image contents and converts supported formats (including HEIC) to JPEG.
             'proof_image' => [
                 $this->isMethod('post') ? 'required' : 'nullable',
-                'image',
-                'mimes:jpg,jpeg,png,webp,heic',
-                'max:5120',
+                'file',
+                'max:15360',
             ],
             'voucher_codes' => ['nullable', 'array'],
             'voucher_codes.A' => ['nullable', 'string', 'max:10000'],
@@ -47,12 +48,21 @@ class StoreClaimRequest extends FormRequest
             'voucher_codes.C' => ['nullable', 'string', 'max:10000'],
             'voucher_codes.D' => ['nullable', 'string', 'max:10000'],
             'voucher_codes.E' => ['nullable', 'string', 'max:10000'],
-            'transfer_status' => ['nullable', 'in:pending,transferred'],
+            'transfer_status' => ['nullable', 'in:pending,approved,transferred,rejected'],
             'transfer_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }
 
+
+    public function messages(): array
+    {
+        return [
+            'proof_image.required' => 'Please attach a proof image before submitting the claim.',
+            'proof_image.file' => 'The proof image upload did not complete. Please try again with a supported image up to 15 MB.',
+            'proof_image.max' => 'The proof image must not be larger than 15 MB.',
+        ];
+    }
 
     /**
      * A voucher code may only be used once across the entire campaign,
