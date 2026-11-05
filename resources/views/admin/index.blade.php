@@ -192,7 +192,7 @@
                             {{-- <span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">
                                 {{ $claim->transfer_status === 'transferred' ? '✓ Transferred' : '○ Pending' }}
                             </span> --}}
-                            <span class="status-badge {{
+                            {{-- <span class="status-badge {{
                                 $claim->transfer_status === 'transferred'
                                     ? 'status-done'
                                     : ($claim->transfer_status === 'rejected'
@@ -205,6 +205,24 @@
                                         : ($claim->transfer_status === 'rejected'
                                             ? '✕ Rejected'
                                             : '○ Pending')
+                                }}
+                            </span> --}}
+                            <span class="status-badge {{
+                                $claim->transfer_status === 'transferred'
+                                    ? 'status-done'
+                                    : ($claim->transfer_status === 'approved'
+                                        ? 'status-approved'
+                                        : ($claim->transfer_status === 'rejected'
+                                            ? 'status-rejected'
+                                            : 'status-pending'))
+                            }}">
+                                {{
+                                    match ($claim->transfer_status) {
+                                        'transferred' => '✓ Transferred',
+                                        'approved' => '✓ Approved',
+                                        'rejected' => '✕ Rejected',
+                                        default => '○ Pending',
+                                    }
                                 }}
                             </span>
                         </td>
@@ -258,7 +276,12 @@
                                     >
                                         Pending transfer
                                     </option>
-
+                                    <option
+                                        value="approved"
+                                        @selected($claim->transfer_status === 'approved')
+                                    >
+                                        Approved
+                                    </option>
                                     <option
                                         value="transferred"
                                         @selected($claim->transfer_status === 'transferred')

@@ -67,3 +67,8 @@
 .voucher-duplicate-warning{margin:12px 0 0;padding:10px 12px;border:1px solid #ffd4ce;border-radius:8px;background:#fff0ee;color:#a53f35;font-size:11px;font-weight:700}
 
 .voucher-duplicate-warning{grid-column:1/-1}
+
+.status-approved {
+    background: #e7f6ec;
+    color: #18794e;
+}
