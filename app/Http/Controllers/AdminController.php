@@ -112,7 +112,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'transfer_status' => [
                 'required',
-                Rule::in(['pending', 'transferred', 'rejected']),
+                Rule::in(['pending', 'approved', 'transferred', 'rejected']),
             ],
             'transfer_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
