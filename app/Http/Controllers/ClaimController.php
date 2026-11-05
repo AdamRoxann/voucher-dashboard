@@ -148,7 +148,10 @@ class ClaimController extends Controller
     public function destroy(Claim $claim) { Storage::disk('public')->delete($claim->proof_image_path); $claim->delete(); return back()->with('success','Claim deleted.'); }
     public function updateTransferStatus(Request $request, Claim $claim)
     {
-        $data = $request->validate(['transfer_status'=>'required|in:pending,transferred','transfer_date'=>'nullable|date']);
+        $data = $request->validate([
+            'transfer_status' => 'required|in:pending,approved,transferred,rejected',
+            'transfer_date' => 'nullable|date',
+        ]);
         // if ($data['transfer_status'] === 'transferred' && empty($data['transfer_date'])) $data['transfer_date'] = now()->toDateString();
         // if ($data['transfer_status'] === 'pending') $data['transfer_date'] = null;
         if (empty($data['transfer_date'])) {
