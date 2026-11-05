@@ -34,8 +34,6 @@
         @endforeach
     </div>
 </section>
-<!-- <section class="panel admin-panel" id="transfers"><div class="panel-heading"><div><h3>Claim transfer management</h3><p class="muted">Update transfer status and transfer date. One row represents one submitted claim.</p></div></div><div class="table-scroll"><table><thead><tr><th>Merchant / claim</th><th>Claim date</th><th>Vouchers</th><th>Claim total</th><th>Transfer status</th><th>Transfer date</th><th>Action</th></tr></thead><tbody>@forelse($claims as $claim)<tr><td><strong>{{ $claim->store->name }}</strong><small class="table-subline">{{ $claim->pic_name }} · #{{ $claim->id }}</small></td><td>{{ $claim->claim_date?->format('d M Y') }}</td><td>{{ $claim->vouchers->count() }}</td><td>Rp {{ number_format((float)$claim->total_claimed, 0, ',', '.') }}</td><td><span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">{{ $claim->transfer_status === 'transferred' ? 'Transferred' : 'Pending' }}</span></td><td colspan="2"><form class="admin-transfer-form" method="POST" action="{{ route('admin.claims.transfer', $claim) }}">@csrf @method('PATCH')<select name="transfer_status"><option value="pending" @selected($claim->transfer_status === 'pending')>Pending</option><option value="transferred" @selected($claim->transfer_status === 'transferred')>Transferred</option></select><input type="date" name="transfer_date" value="{{ $claim->transfer_date?->format('Y-m-d') }}"><button class="button button-primary button-small">Save</button><a class="text-link" href="{{ route('claims.show', $claim) }}">Details</a></form></td></tr>@empty<tr><td colspan="7">No claims found.</td></tr>@endforelse</tbody></table></div><div class="pagination-wrap">{{ $claims->fragment('transfers')->links() }}</div></section> -->
-
 <section class="panel table-panel admin-panel" id="transfers">
     <div class="panel-heading">
         <div>
@@ -189,42 +187,7 @@
                         </td>
 
                         <td>
-                            {{-- <span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">
-                                {{ $claim->transfer_status === 'transferred' ? '✓ Transferred' : '○ Pending' }}
-                            </span> --}}
-                            {{-- <span class="status-badge {{
-                                $claim->transfer_status === 'transferred'
-                                    ? 'status-done'
-                                    : ($claim->transfer_status === 'rejected'
-                                        ? 'status-rejected'
-                                        : 'status-pending')
-                            }}">
-                                {{
-                                    $claim->transfer_status === 'transferred'
-                                        ? '✓ Transferred'
-                                        : ($claim->transfer_status === 'rejected'
-                                            ? '✕ Rejected'
-                                            : '○ Pending')
-                                }}
-                            </span> --}}
-                            <span class="status-badge {{
-                                $claim->transfer_status === 'transferred'
-                                    ? 'status-done'
-                                    : ($claim->transfer_status === 'approved'
-                                        ? 'status-approved'
-                                        : ($claim->transfer_status === 'rejected'
-                                            ? 'status-rejected'
-                                            : 'status-pending'))
-                            }}">
-                                {{
-                                    match ($claim->transfer_status) {
-                                        'transferred' => '✓ Transferred',
-                                        'approved' => '✓ Approved',
-                                        'rejected' => '✕ Rejected',
-                                        default => '○ Pending',
-                                    }
-                                }}
-                            </span>
+                            @include('partials.claim-status', ['claim' => $claim])
                         </td>
 
                         <td>
@@ -232,31 +195,6 @@
                         </td>
 
                         <td style="display: flex; align-items: center;">
-                            {{-- <form class="admin-transfer-form"
-                                  method="POST"
-                                  action="{{ route('admin.claims.transfer', $claim) }}">
-                                @csrf
-                                @method('PATCH')
-
-                                <select name="transfer_status" aria-label="Transfer status">
-                                    <option value="pending"
-                                        @selected($claim->transfer_status === 'pending')>
-                                        Pending
-                                    </option>
-                                    <option value="transferred"
-                                        @selected($claim->transfer_status === 'transferred')>
-                                        Transferred
-                                    </option>
-                                </select>
-
-                                <input type="date" name="transfer_date"
-                                       aria-label="Transfer date"
-                                       value="{{ $claim->transfer_date?->format('Y-m-d') }}">
-
-                                <button class="button button-primary button-small">
-                                    Save
-                                </button>
-                            </form> --}}
                             <form
                                 class="admin-transfer-form"
                                 method="POST"
@@ -288,7 +226,6 @@
                                     >
                                         Transferred
                                     </option>
-
                                     <option
                                         value="rejected"
                                         @selected($claim->transfer_status === 'rejected')
@@ -299,7 +236,6 @@
 
                                 <label class="admin-notes-field">
                                     <span>Notes (optional)</span>
-
                                     <textarea
                                         name="notes"
                                         rows="2"
@@ -323,8 +259,7 @@
                                 </button>
                             </form>
 
-                             <a class="text-link"
-                               href="{{ route('claims.show', $claim) }}">
+                            <a class="text-link" href="{{ route('claims.show', $claim) }}">
                                 Details
                             </a>
                         </td>

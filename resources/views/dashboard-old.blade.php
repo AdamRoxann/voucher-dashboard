@@ -352,44 +352,10 @@
                         </td>
 
                         <td>
-                            @if($isAdmin)
-                                <form
-                                    method="POST"
-                                    action="{{ route('claims.transfer-status', $claim) }}"
-                                    class="status-form"
-                                >
-                                    @csrf
-                                    @method('PATCH')
+                            @include('partials.claim-status', ['claim' => $claim])
 
-                                    <input
-                                        type="hidden"
-                                        name="transfer_status"
-                                        value="{{ $claim->transfer_status === 'transferred' ? 'pending' : 'transferred' }}"
-                                    >
-
-                                    <button
-                                        class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}"
-                                        type="submit"
-                                    >
-                                        {{ $claim->transfer_status === 'transferred' ? '✓ Transferred' : '○ Pending' }}
-                                    </button>
-
-                                    @if($claim->transfer_date)
-                                        <small>
-                                            {{ $claim->transfer_date->format('d M Y') }}
-                                        </small>
-                                    @endif
-                                </form>
-                            @else
-                                <span class="status-badge {{ $claim->transfer_status === 'transferred' ? 'status-done' : 'status-pending' }}">
-                                    {{ $claim->transfer_status === 'transferred' ? '✓ Transferred' : '○ Pending' }}
-                                </span>
-
-                                @if($claim->transfer_date)
-                                    <small>
-                                        {{ $claim->transfer_date->format('d M Y') }}
-                                    </small>
-                                @endif
+                            @if($claim->transfer_date)
+                                <small>{{ $claim->transfer_date->format('d M Y') }}</small>
                             @endif
                         </td>
 

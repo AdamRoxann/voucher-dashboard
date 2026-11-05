@@ -8,7 +8,7 @@
 <section class="panel" style="overflow:hidden;padding:0;margin-bottom:22px">
   <div style="padding:24px;background:linear-gradient(120deg,#174aa8,#2865c7);color:#fff;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap">
     <div><div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.8">Merchant / Store</div><h2 style="margin:7px 0;font-size:28px;color:#fff">{{ $claim->store->name }}</h2><div style="opacity:.88">Area: {{ $claim->store->area?->name ?? 'Unassigned' }} · Submitted {{ $claim->created_at->format('d M Y · H:i') }}</div></div>
-    <span class="status-badge {{ $claim->transfer_status==='transferred'?'status-done':'status-pending' }}">{{ $claim->transfer_status==='transferred'?'✓ Sudah ditransfer':'○ Belum ditransfer' }}</span>
+    @include('partials.claim-status', ['claim' => $claim])
   </div>
   <div style="padding:24px">
     <div class="stat-grid" style="margin-bottom:22px">
@@ -22,7 +22,7 @@
         <div><dt>Nama PIC</dt><dd>{{ $claim->pic_name }}</dd></div><div><dt>Nomor HP PIC</dt><dd>{{ $claim->pic_phone }}</dd></div><div><dt>Tanggal transaksi</dt><dd>{{ $claim->transaction_date?->format('d M Y') ?? '—' }}</dd></div><div><dt>Waktu submit</dt><dd>{{ $claim->created_at->format('d M Y, H:i:s') }}</dd></div>
       </dl></section>
       <section class="panel"><div class="panel-heading"><div><h3>Informasi rekening</h3><p class="muted">Detail rekening Mandiri penerima</p></div></div><dl class="detail-list">
-        <div><dt>Nama pemilik rekening</dt><dd>{{ $claim->account_holder_name }}</dd></div><div><dt>Nomor rekening Mandiri</dt><dd>{{ $claim->mandiri_account_number }}</dd></div><div><dt>Status transfer</dt><dd>{{ $claim->transfer_status==='transferred'?'Sudah ditransfer':'Belum ditransfer' }}</dd></div><div><dt>Tanggal transfer</dt><dd>{{ $claim->transfer_date?->format('d M Y') ?? 'Belum tersedia' }}</dd></div>
+        <div><dt>Nama pemilik rekening</dt><dd>{{ $claim->account_holder_name }}</dd></div><div><dt>Nomor rekening Mandiri</dt><dd>{{ $claim->mandiri_account_number }}</dd></div><div><dt>Transfer status</dt><dd>@include('partials.claim-status', ['claim' => $claim])</dd></div><div><dt>Tanggal transfer</dt><dd>{{ $claim->transfer_date?->format('d M Y') ?? 'Belum tersedia' }}</dd></div>
       </dl></section>
     </div>
     <section class="panel" style="margin-bottom:22px"><div class="panel-heading"><div><h3>Rincian voucher</h3><p class="muted">Kode voucher dikelompokkan berdasarkan jenis</p></div></div><div class="type-list">
