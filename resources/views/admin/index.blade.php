@@ -4,8 +4,13 @@
 <style>
     .admin-stats {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 16px;
+    }
+
+    .admin-stats .stat-currency strong {
+        font-size: clamp(1rem, 1.35vw, 1.5rem);
+        overflow-wrap: anywhere;
     }
 
     @media (max-width: 1000px) {
@@ -21,6 +26,7 @@
     <article class="stat-card"><span>Total claims</span><strong>{{ number_format($counts['claims']) }}</strong><small>All submitted forms</small></article>
     <article class="stat-card"><span>Pending transfer</span><strong>{{ number_format($counts['pending']) }}</strong><small>Require follow-up</small></article>
     <article class="stat-card"><span>Approved</span><strong>{{ number_format($counts['approved']) }}</strong><small>Approved claims awaiting transfer</small></article>
+    <article class="stat-card stat-currency"><span>Approved voucher value</span><strong>Rp {{ number_format((float) $counts['approved_voucher_value'], 0, ',', '.') }}</strong><small>Total value of vouchers in approved claims</small></article>
     <article class="stat-card"><span>Transferred</span><strong>{{ number_format($counts['transferred']) }}</strong><small>Marked as paid</small></article>
     <article class="stat-card"><span>Active stores</span><strong>{{ number_format($counts['stores']) }}</strong><small>Can submit claims</small></article>
 </div>
