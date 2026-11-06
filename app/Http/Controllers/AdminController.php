@@ -49,6 +49,7 @@ class AdminController extends Controller
         $counts = [
             'claims' => Claim::count(),
             'pending' => Claim::where('transfer_status', 'pending')->count(),
+            'approved' => Claim::where('transfer_status', 'approved')->count(),
             'transferred' => Claim::where('transfer_status', 'transferred')->count(),
             'stores' => Store::where('is_active', true)->whereNotNull('area_id')->count(),
         ];
