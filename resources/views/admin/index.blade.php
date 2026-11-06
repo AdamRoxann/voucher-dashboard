@@ -64,7 +64,7 @@
             <div>
                 <h3>Find a claim</h3>
                 <p class="muted">
-                    Narrow down claims by date, area, store, voucher type or keyword.
+                    Narrow down claims by date, area, store, voucher type, status or keyword.
                 </p>
             </div>
 
@@ -117,6 +117,24 @@
                         <option value="{{ $type }}"
                             @selected(request('voucher_type') === $type)>
                             Voucher {{ $type }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
+
+            <label>
+                Transfer status
+                <select name="transfer_status">
+                    <option value="">All statuses</option>
+                    @foreach([
+                        'pending' => 'Pending transfer',
+                        'approved' => 'Approved',
+                        'transferred' => 'Transferred',
+                        'rejected' => 'Rejected',
+                    ] as $status => $label)
+                        <option value="{{ $status }}"
+                            @selected(request('transfer_status') === $status)>
+                            {{ $label }}
                         </option>
                     @endforeach
                 </select>

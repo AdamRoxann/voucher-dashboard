@@ -159,7 +159,7 @@ class ClaimController extends Controller
     }
     public function export(Request $request)
     {
-        $filters = $request->only(['from', 'to', 'area_id', 'store_id', 'voucher_type', 'search']);
+        $filters = $request->only(['from', 'to', 'area_id', 'store_id', 'voucher_type', 'transfer_status', 'search']);
         return Excel::download(new ClaimsExport($filters), 'voucher-claims-'.now()->format('Y-m-d_His').'.xlsx');
     }
     private function parseCodes(array $input): array
@@ -225,6 +225,9 @@ class ClaimController extends Controller
                 $q->whereHas('vouchers', function ($v) use ($request) {
                     $v->where('voucher_type', $request->input('voucher_type'));
                 });
+            })
+            ->when($request->filled('transfer_status'), function ($q) use ($request) {
+                $q->where('transfer_status', $request->input('transfer_status'));
             })
             ->when($request->filled('search'), function ($q) use ($request) {
                 $search = $request->input('search');

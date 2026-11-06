@@ -13,6 +13,10 @@ class AdminController extends Controller
 {
     public function index(Request $request)
     {
+        $request->validate([
+            'transfer_status' => ['nullable', Rule::in(['pending', 'approved', 'transferred', 'rejected'])],
+        ]);
+
         $settings = DB::table('campaign_settings')->pluck('setting_value', 'setting_key');
         $areas = Area::withCount('stores')->orderBy('name')->get();
         $stores = Store::with('area')->withCount('claims')->orderBy('name')->get();
@@ -24,6 +28,7 @@ class AdminController extends Controller
             ->when($request->filled('area_id'), fn ($q) => $q->whereHas('store', fn ($s) => $s->where('area_id', $request->integer('area_id'))))
             ->when($request->filled('store_id'), fn ($q) => $q->where('store_id', $request->integer('store_id')))
             ->when($request->filled('voucher_type'), fn ($q) => $q->whereHas('vouchers', fn ($v) => $v->where('voucher_type', $request->voucher_type)))
+            ->when($request->filled('transfer_status'), fn ($q) => $q->where('transfer_status', $request->input('transfer_status')))
             ->when($request->filled('search'), function ($q) use ($request) {
                 $search = $request->search;
                 $q->where(function ($w) use ($search) {

@@ -37,6 +37,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             ->when(!empty($this->filters['area_id']), fn ($q) => $q->whereHas('store', fn ($s) => $s->where('area_id', $this->filters['area_id'])))
             ->when(!empty($this->filters['store_id']), fn ($q) => $q->where('store_id', $this->filters['store_id']))
             ->when(!empty($this->filters['voucher_type']), fn ($q) => $q->whereHas('vouchers', fn ($v) => $v->where('voucher_type', $this->filters['voucher_type'])))
+            ->when(!empty($this->filters['transfer_status']), fn ($q) => $q->where('transfer_status', $this->filters['transfer_status']))
             ->when(!empty($this->filters['search']), function ($q) {
                 $search = $this->filters['search'];
                 $q->where(function ($w) use ($search) {
