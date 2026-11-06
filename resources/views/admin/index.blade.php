@@ -1,10 +1,26 @@
 @extends('layouts.app')
 @section('title', 'Admin settings')
 @section('content')
+<style>
+    .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    @media (max-width: 1000px) {
+        .admin-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+        .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+</style>
 <div class="page-heading"><div><span class="eyebrow blue">ADMINISTRATION</span><h2>Campaign control centre</h2><p class="muted">Manage event dates, merchant directory and claim transfer statuses.</p></div><a class="button button-outline" href="{{ route('dashboard') }}">← Back to dashboard</a></div>
 <div class="stats-grid admin-stats">
     <article class="stat-card"><span>Total claims</span><strong>{{ number_format($counts['claims']) }}</strong><small>All submitted forms</small></article>
     <article class="stat-card"><span>Pending transfer</span><strong>{{ number_format($counts['pending']) }}</strong><small>Require follow-up</small></article>
+    <article class="stat-card"><span>Approved</span><strong>{{ number_format($counts['approved']) }}</strong><small>Approved claims awaiting transfer</small></article>
     <article class="stat-card"><span>Transferred</span><strong>{{ number_format($counts['transferred']) }}</strong><small>Marked as paid</small></article>
     <article class="stat-card"><span>Active stores</span><strong>{{ number_format($counts['stores']) }}</strong><small>Can submit claims</small></article>
 </div>
