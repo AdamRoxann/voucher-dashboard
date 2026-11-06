@@ -2,13 +2,23 @@
 @section('title', 'Admin settings')
 @section('content')
 <style>
-    .admin-stats {
+    .admin-stats,
+    .admin-value-stats {
         display: grid;
-        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 16px;
     }
 
-    .admin-stats .stat-currency strong {
+    .admin-stats {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .admin-value-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        margin-top: 16px;
+    }
+
+    .admin-stats .stat-currency strong,
+    .admin-value-stats .stat-currency strong {
         font-size: clamp(1rem, 1.35vw, 1.5rem);
         overflow-wrap: anywhere;
     }
@@ -18,7 +28,8 @@
     }
 
     @media (max-width: 640px) {
-        .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .admin-stats,
+        .admin-value-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
 </style>
 <div class="page-heading"><div><span class="eyebrow blue">ADMINISTRATION</span><h2>Campaign control centre</h2><p class="muted">Manage event dates, merchant directory and claim transfer statuses.</p></div><a class="button button-outline" href="{{ route('dashboard') }}">← Back to dashboard</a></div>
@@ -26,9 +37,12 @@
     <article class="stat-card"><span>Total claims</span><strong>{{ number_format($counts['claims']) }}</strong><small>All submitted forms</small></article>
     <article class="stat-card"><span>Pending transfer</span><strong>{{ number_format($counts['pending']) }}</strong><small>Require follow-up</small></article>
     <article class="stat-card"><span>Approved</span><strong>{{ number_format($counts['approved']) }}</strong><small>Approved claims awaiting transfer</small></article>
-    <article class="stat-card stat-currency"><span>Approved voucher value</span><strong>Rp {{ number_format((float) $counts['approved_voucher_value'], 0, ',', '.') }}</strong><small>Total value of vouchers in approved claims</small></article>
     <article class="stat-card"><span>Transferred</span><strong>{{ number_format($counts['transferred']) }}</strong><small>Marked as paid</small></article>
     <article class="stat-card"><span>Active stores</span><strong>{{ number_format($counts['stores']) }}</strong><small>Can submit claims</small></article>
+</div>
+<div class="stats-grid admin-value-stats">
+    <article class="stat-card stat-currency"><span>Approved voucher value</span><strong>Rp {{ number_format((float) $counts['approved_voucher_value'], 0, ',', '.') }}</strong><small>Total value of vouchers in approved claims</small></article>
+    <article class="stat-card stat-currency"><span>Transferred voucher value</span><strong>Rp {{ number_format((float) $counts['transferred_voucher_value'], 0, ',', '.') }}</strong><small>Total value of vouchers in transferred claims</small></article>
 </div>
 <section class="panel admin-panel" id="event"><div class="panel-heading"><div><h3>Event &amp; campaign period</h3><p class="muted">These details are saved in the database for future admin edits.</p></div></div>
 <form method="POST" action="{{ route('admin.settings.update') }}" class="admin-form">@csrf @method('PUT')
