@@ -10,6 +10,14 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 
 class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
+    private const VOUCHER_AMOUNTS = [
+        'A' => 50000,
+        'B' => 50000,
+        'C' => 50000,
+        'D' => 50000,
+        'E' => 100000,
+    ];
+
     public function __construct(private array $filters = [])
     {
     }
@@ -17,7 +25,13 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     public function query()
     {
         return Claim::query()
-            ->with(['store.area', 'vouchers'])
+            ->with([
+                'store.area',
+                'vouchers' => fn ($v) => $v->when(
+                    !empty($this->filters['voucher_type']),
+                    fn ($q) => $q->where('voucher_type', $this->filters['voucher_type'])
+                ),
+            ])
             ->when(!empty($this->filters['from']), fn ($q) => $q->whereDate('claim_date', '>=', $this->filters['from']))
             ->when(!empty($this->filters['to']), fn ($q) => $q->whereDate('claim_date', '<=', $this->filters['to']))
             ->when(!empty($this->filters['area_id']), fn ($q) => $q->whereHas('store', fn ($s) => $s->where('area_id', $this->filters['area_id'])))
@@ -41,7 +55,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     {
         return [
             'Claim ID', 'Claim Date', 'Area', 'Store', 'PIC Name', 'PIC Phone',
-            'Total Claimed (IDR)', 'Mandiri Account Number', 'Account Holder',
+            'Voucher Amount (IDR)', 'Mandiri Account Number', 'Account Holder',
             'Transaction Date', 'Voucher Type', 'Voucher Code', 'Transfer Status',
             'Transfer Date', 'Proof Image Path', 'Notes',
         ];
@@ -56,7 +70,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $claim->store->name,
             $claim->pic_name,
             $claim->pic_phone,
-            $claim->total_claimed,
+            null, // Replaced with the individual voucher amount for each exported row.
             $claim->mandiri_account_number,
             $claim->account_holder_name,
             $claim->transaction_date?->format('Y-m-d'),
@@ -72,7 +86,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
         }
 
         return $claim->vouchers->map(fn ($voucher) => [
-            ...$base,
+            ...array_replace($base, [6 => self::VOUCHER_AMOUNTS[$voucher->voucher_type] ?? 0]),
             $voucher->voucher_type,
             $voucher->voucher_code,
             $claim->transfer_status,
