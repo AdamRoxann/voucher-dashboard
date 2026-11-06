@@ -46,20 +46,25 @@ class AdminController extends Controller
             ->paginate(30)
             ->withQueryString();
 
-        $counts = [
-            'claims' => Claim::count(),
-            'pending' => Claim::where('transfer_status', 'pending')->count(),
-            'approved' => Claim::where('transfer_status', 'approved')->count(),
-            'approved_voucher_value' => DB::table('claim_vouchers')
+        $voucherValueForStatus = function (string $status) {
+            return DB::table('claim_vouchers')
                 ->join('claims', 'claim_vouchers.claim_id', '=', 'claims.id')
-                ->where('claims.transfer_status', 'approved')
+                ->where('claims.transfer_status', $status)
                 ->selectRaw("COALESCE(SUM(CASE
                     WHEN claim_vouchers.voucher_type IN ('A', 'B', 'C', 'D') THEN 50000
                     WHEN claim_vouchers.voucher_type = 'E' THEN 100000
                     ELSE 0
                 END), 0) AS total_value")
-                ->value('total_value'),
+                ->value('total_value');
+        };
+
+        $counts = [
+            'claims' => Claim::count(),
+            'pending' => Claim::where('transfer_status', 'pending')->count(),
+            'approved' => Claim::where('transfer_status', 'approved')->count(),
             'transferred' => Claim::where('transfer_status', 'transferred')->count(),
+            'approved_voucher_value' => $voucherValueForStatus('approved'),
+            'transferred_voucher_value' => $voucherValueForStatus('transferred'),
             'stores' => Store::where('is_active', true)->whereNotNull('area_id')->count(),
         ];
 
