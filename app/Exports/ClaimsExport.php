@@ -7,8 +7,11 @@ use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
+use Illuminate\Support\Facades\Storage;
 
-class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
+class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize, WithEvents
 {
     private const VOUCHER_AMOUNTS = [
         'A' => 50000,
@@ -58,7 +61,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             'Claim ID', 'Claim Date', 'Area', 'Store', 'PIC Name', 'PIC Phone',
             'Voucher Amount (IDR)', 'Mandiri Account Number', 'Account Holder',
             'Transaction Date', 'Voucher Type', 'Voucher Code', 'Transfer Status',
-            'Transfer Date', 'Proof Image Path', 'Notes',
+            'Transfer Date', 'Proof Image Link', 'Notes',
         ];
     }
 
@@ -82,7 +85,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
                 ...$base,
                 '-', '-', $claim->transfer_status,
                 $claim->transfer_date?->format('Y-m-d'),
-                $claim->proof_image_path, $claim->notes,
+                $this->proofUrl($claim->proof_image_path), $claim->notes,
             ];
         }
 
@@ -92,8 +95,60 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
             $voucher->voucher_code,
             $claim->transfer_status,
             $claim->transfer_date?->format('Y-m-d'),
-            $claim->proof_image_path,
+            $this->proofUrl($claim->proof_image_path),
             $claim->notes,
         ])->all();
     }
+
+    /**
+     * Convert the stored public-disk path into an absolute URL so the
+     * exported workbook can link directly to the proof image.
+     */
+    private function proofUrl(?string $path): ?string
+    {
+        if (empty($path)) {
+            return null;
+        }
+
+        $url = Storage::disk('public')->url($path);
+
+        if (preg_match('#^https?://#i', $url)) {
+            return $url;
+        }
+
+        return rtrim((string) config('app.url'), '/') . '/' . ltrim($url, '/');
+    }
+
+    /**
+     * Turn the proof URL in column O into a real Excel hyperlink.
+     * The displayed text stays short, while the hyperlink target is the
+     * absolute https://claimlivinmarkt.com/storage/... URL.
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event): void {
+                $sheet = $event->sheet->getDelegate();
+                $lastRow = $sheet->getHighestRow();
+
+                for ($row = 2; $row <= $lastRow; $row++) {
+                    $cell = $sheet->getCell("O{$row}");
+                    $url = $cell->getValue();
+
+                    if (!is_string($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
+                        $cell->setValue('—');
+                        continue;
+                    }
+
+                    $cell->setValue('Open proof');
+                    $cell->getHyperlink()->setUrl($url);
+                    $cell->getHyperlink()->setTooltip('Open proof image');
+                    $cell->getStyle()->getFont()
+                        ->setUnderline(true)
+                        ->getColor()->setARGB('FF0563C1');
+                }
+            },
+        ];
+    }
+
 }
