@@ -402,7 +402,7 @@
                                         Edit
                                     </a>
 
-                                    <form
+                                    {{-- <form
                                         method="POST"
                                         action="{{ route('claims.destroy', $claim) }}"
                                         data-confirm="Delete this claim and its voucher codes?"
@@ -411,7 +411,7 @@
                                         @method('DELETE')
 
                                         <button type="submit">Delete</button>
-                                    </form>
+                                    </form> --}}
                                 </div>
                             </td>
                         @endif
