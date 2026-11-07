@@ -14,6 +14,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $query = Claim::query()
+            ->where('transfer_status', '!=', 'rejected')
             ->with(['store.area', 'vouchers'])
             ->when($request->filled('from'), fn ($q) => $q->whereDate('claim_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('claim_date', '<=', $request->date('to')))
@@ -55,7 +56,9 @@ class DashboardController extends Controller
             ->pluck('total', 'voucher_type');
 
         $topStores = Store::with('area')
-            ->withCount(['claims as voucher_count' => fn ($q) => $q->whereHas('vouchers')])
+            ->withCount(['claims as voucher_count' => fn ($q) => $q
+                ->where('transfer_status', '!=', 'rejected')
+                ->whereHas('vouchers')])
             ->when($request->filled('area_id'), fn ($q) => $q->where('area_id', $request->integer('area_id')))
             ->when($request->filled('store_id'), fn ($q) => $q->where('id', $request->integer('store_id')))
             ->orderByDesc('voucher_count')

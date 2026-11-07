@@ -166,7 +166,6 @@
                         'pending' => 'Pending transfer',
                         'approved' => 'Approved',
                         'transferred' => 'Transferred',
-                        'rejected' => 'Rejected',
                     ] as $status => $label)
                         <option value="{{ $status }}"
                             @selected(request('transfer_status') === $status)>

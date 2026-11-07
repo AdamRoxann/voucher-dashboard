@@ -208,6 +208,7 @@ class ClaimController extends Controller
 
         // Apply the same filters as the dashboard.
         $query = Claim::query()
+            ->where('transfer_status', '!=', 'rejected')
             ->with(['store.area', 'vouchers'])
             ->when($request->filled('from'), function ($q) use ($request) {
                 $q->whereDate('claim_date', '>=', $request->input('from'));

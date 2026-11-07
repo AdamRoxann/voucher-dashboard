@@ -19,9 +19,13 @@ class AdminController extends Controller
 
         $settings = DB::table('campaign_settings')->pluck('setting_value', 'setting_key');
         $areas = Area::withCount('stores')->orderBy('name')->get();
-        $stores = Store::with('area')->withCount('claims')->orderBy('name')->get();
+        $stores = Store::with('area')
+            ->withCount(['claims' => fn ($q) => $q->where('transfer_status', '!=', 'rejected')])
+            ->orderBy('name')
+            ->get();
 
         $query = Claim::query()
+            ->where('transfer_status', '!=', 'rejected')
             ->with(['store.area', 'vouchers'])
             ->when($request->filled('from'), fn ($q) => $q->whereDate('claim_date', '>=', $request->date('from')))
             ->when($request->filled('to'), fn ($q) => $q->whereDate('claim_date', '<=', $request->date('to')))
@@ -59,7 +63,7 @@ class AdminController extends Controller
         };
 
         $counts = [
-            'claims' => Claim::count(),
+            'claims' => Claim::where('transfer_status', '!=', 'rejected')->count(),
             'pending' => Claim::where('transfer_status', 'pending')->count(),
             'approved' => Claim::where('transfer_status', 'approved')->count(),
             'transferred' => Claim::where('transfer_status', 'transferred')->count(),
