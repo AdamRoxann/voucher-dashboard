@@ -112,8 +112,177 @@
         </div>
     </section> --}}
 
-    <div class="form-actions"><a href="{{ route('dashboard') }}" class="button button-outline">Cancel</a><button type="submit" class="button button-primary">{{ $claim->exists ? 'Save changes' : 'Save claim' }} <span>→</span></button></div>
+    <div class="form-actions">
+        <a href="{{ route('dashboard') }}" class="button button-outline">Cancel</a>
+        <button
+            type="submit"
+            class="button button-primary claim-submit-button"
+            data-claim-submit
+            data-loading-label="{{ $claim->exists ? 'Saving changes...' : 'Submitting claim...' }}"
+        >
+            <span data-submit-label>{{ $claim->exists ? 'Save changes' : 'Save claim' }}</span>
+            <span data-submit-arrow aria-hidden="true">→</span>
+            <span class="claim-submit-button-spinner" data-submit-spinner aria-hidden="true" hidden></span>
+        </button>
+    </div>
 </form>
 
+<div class="claim-submit-overlay" data-claim-submit-overlay hidden aria-hidden="true">
+    <div class="claim-submit-dialog" role="status" aria-live="polite" aria-atomic="true">
+        <span class="claim-submit-spinner" aria-hidden="true"></span>
+        <strong>{{ $claim->exists ? 'Saving your changes...' : 'Submitting your claim...' }}</strong>
+        <p>Please keep this page open while we save your claim. Do not click submit again.</p>
+    </div>
+</div>
+
+<style>
+    .claim-submit-button:disabled {
+        cursor: wait;
+        opacity: .78;
+        transform: none;
+    }
+
+    .claim-submit-button-spinner,
+    .claim-submit-spinner {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(255, 255, 255, .38);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: claim-submit-spin .75s linear infinite;
+        flex: 0 0 auto;
+    }
+
+    .claim-submit-button-spinner[hidden] {
+        display: none !important;
+    }
+
+    .claim-submit-spinner {
+        width: 42px;
+        height: 42px;
+        border: 4px solid #e7edf5;
+        border-top-color: #0758DD;
+        margin-bottom: 16px;
+    }
+
+    .claim-submit-overlay[hidden] {
+        display: none !important;
+    }
+
+    .claim-submit-overlay:not([hidden]) {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(11, 26, 48, .58);
+        backdrop-filter: blur(3px);
+    }
+
+    .claim-submit-dialog {
+        width: min(100%, 390px);
+        padding: 30px 26px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 20px 70px rgba(0, 0, 0, .22);
+        text-align: center;
+        color: #17324f;
+    }
+
+    .claim-submit-dialog strong {
+        display: block;
+        font-size: 16px;
+        margin-bottom: 7px;
+    }
+
+    .claim-submit-dialog p {
+        margin: 0;
+        color: #718198;
+        font-size: 12px;
+        line-height: 1.6;
+    }
+
+    @keyframes claim-submit-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .claim-submit-button-spinner,
+        .claim-submit-spinner {
+            animation-duration: 1.8s;
+        }
+    }
+</style>
+
+@push('scripts')
+<script>
+(() => {
+    const form = document.querySelector('.claim-form');
+    if (!form) return;
+
+    const submitButton = form.querySelector('[data-claim-submit]');
+    const submitLabel = submitButton?.querySelector('[data-submit-label]');
+    const submitArrow = submitButton?.querySelector('[data-submit-arrow]');
+    const submitSpinner = submitButton?.querySelector('[data-submit-spinner]');
+    const loadingOverlay = document.querySelector('[data-claim-submit-overlay]');
+    const originalSubmitLabel = submitLabel?.textContent ?? 'Save claim';
+    let submissionStarted = false;
+
+    form.addEventListener('submit', (event) => {
+        // Ignore any additional click, Enter key, or scripted submit while the
+        // first request is still being processed by the server.
+        if (submissionStarted) {
+            event.preventDefault();
+            return;
+        }
+
+        submissionStarted = true;
+        form.setAttribute('aria-busy', 'true');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.setAttribute('aria-disabled', 'true');
+            submitButton.classList.add('is-loading');
+
+            if (submitLabel) {
+                submitLabel.textContent = submitButton.dataset.loadingLabel || 'Submitting...';
+            }
+            if (submitArrow) submitArrow.hidden = true;
+            if (submitSpinner) submitSpinner.hidden = false;
+        }
+
+        if (loadingOverlay) {
+            loadingOverlay.hidden = false;
+            loadingOverlay.setAttribute('aria-hidden', 'false');
+        }
+    });
+
+    // Restore the form if the browser brings it back from its back-forward cache.
+    window.addEventListener('pageshow', (event) => {
+        if (!event.persisted) return;
+
+        submissionStarted = false;
+        form.removeAttribute('aria-busy');
+
+        if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.removeAttribute('aria-disabled');
+            submitButton.classList.remove('is-loading');
+        }
+        if (submitLabel) submitLabel.textContent = originalSubmitLabel;
+        if (submitArrow) submitArrow.hidden = false;
+        if (submitSpinner) submitSpinner.hidden = true;
+
+        if (loadingOverlay) {
+            loadingOverlay.hidden = true;
+            loadingOverlay.setAttribute('aria-hidden', 'true');
+        }
+    });
+})();
+</script>
+@endpush
 
 @endsection
