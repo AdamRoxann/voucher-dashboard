@@ -28,6 +28,7 @@ class ClaimsExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSi
     public function query()
     {
         return Claim::query()
+            ->where('transfer_status', '!=', 'rejected')
             ->with([
                 'store.area',
                 'vouchers' => fn ($v) => $v->when(
