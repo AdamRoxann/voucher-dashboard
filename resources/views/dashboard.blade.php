@@ -18,9 +18,9 @@
         </p>
     </div>
 
-    <a href="{{ route('claims.create') }}" class="button button-primary">
+    {{-- <a href="{{ route('claims.create') }}" class="button button-primary">
         ＋ Create a claim
-    </a>
+    </a> --}}
 </div>
 
 {{-- Filters --}}
